@@ -313,7 +313,7 @@ public:
 
     bool addNetwork(const String& ssid, const String& psk) {
         LOG_I("Add DHCP network config SSID=%s PSK_len=%d", ssid.c_str(), psk.length());
-        return addNetwork(ssid, psk);
+        return addNetwork(ssid, psk, IPAddress(), IPAddress(), IPAddress(), IPAddress(), IPAddress());
     }
 
     bool addNetwork(const String& ssid,

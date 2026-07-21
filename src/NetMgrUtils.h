@@ -142,6 +142,9 @@ public:
             if (_ptr + len <= _end) {
 #if defined(ESP8266) || defined(ARDUINO_ARCH_NRF5) || defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_AMEBA)
                 char buff[64];
+                if (len >= sizeof(buff)) {
+                    len = sizeof(buff) - 1;
+                }
                 memcpy(buff, _ptr, len);
                 buff[len] = '\0';
                 s = buff;

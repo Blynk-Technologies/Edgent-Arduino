@@ -15,6 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # ESP32 Arduino Core V3
           - name: esp32
             fqbn: "esp32:esp32:esp32:PartitionScheme=min_spiffs"
             core: esp32:esp32
@@ -45,6 +46,20 @@ jobs:
             core: esp32:esp32
             core-version: "3.3.10"
             core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+
+          # ESP32 Arduino Core V2 (legacy)
+          - name: esp32s2-core-v2
+            fqbn: "esp32:esp32:esp32s2:PartitionScheme=min_spiffs"
+            core: esp32:esp32
+            core-version: "2.0.17"
+            core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          - name: esp32s3-core-v2
+            fqbn: "esp32:esp32:esp32s3:PartitionScheme=min_spiffs"
+            core: esp32:esp32
+            core-version: "2.0.17"
+            core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+
+          # ESP8266
           - name: esp8266
             fqbn: "esp8266:esp8266:d1_mini"
             core: esp8266:esp8266
@@ -53,13 +68,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up arduino-cli
         uses: arduino/setup-arduino-cli@v2
 
       - name: Cache Arduino core and libraries
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.arduino15
