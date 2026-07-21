@@ -1,0 +1,95 @@
+name: Arduino
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: esp32
+            fqbn: "esp32:esp32:esp32:PartitionScheme=min_spiffs"
+            core: esp32:esp32
+            core-version: "3.3.10"
+            core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          - name: esp32c3
+            fqbn: "esp32:esp32:esp32c3:PartitionScheme=min_spiffs"
+            core: esp32:esp32
+            core-version: "3.3.10"
+            core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          - name: esp32c6
+            fqbn: "esp32:esp32:esp32c6:PartitionScheme=min_spiffs"
+            core: esp32:esp32
+            core-version: "3.3.10"
+            core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          - name: esp32c5
+            fqbn: "esp32:esp32:esp32c5:PartitionScheme=min_spiffs"
+            core: esp32:esp32
+            core-version: "3.3.10"
+            core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          - name: esp32s2
+            fqbn: "esp32:esp32:esp32s2:PartitionScheme=min_spiffs"
+            core: esp32:esp32
+            core-version: "3.3.10"
+            core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          - name: esp32s3
+            fqbn: "esp32:esp32:esp32s3:PartitionScheme=min_spiffs"
+            core: esp32:esp32
+            core-version: "3.3.10"
+            core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          - name: esp8266
+            fqbn: "esp8266:esp8266:d1_mini"
+            core: esp8266:esp8266
+            core-version: "3.1.2"
+            core-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up arduino-cli
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Cache Arduino core and libraries
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.arduino15
+            ~/Arduino/libraries
+          key: ${{ runner.os }}-arduino-${{ matrix.core }}-${{ matrix.core-version }}-${{ hashFiles('library.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-arduino-${{ matrix.core }}-${{ matrix.core-version }}-
+            ${{ runner.os }}-arduino-
+
+      - name: Install board core
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls ${{ matrix.core-url }}
+          arduino-cli core update-index
+          arduino-cli core install ${{ matrix.core }}@${{ matrix.core-version }}
+
+      - name: Install libraries
+        run: |
+          arduino-cli lib install \
+            Blynk \
+            ArduinoJson \
+            ArduinoHttpClient \
+            OneButton \
+            "Adafruit NeoPixel" \
+            NimBLE-Arduino \
+            Preferences
+
+      - name: Compile Blynk.Edgent example
+        run: |
+          arduino-cli compile \
+            --fqbn "${{ matrix.fqbn }}" \
+            --library . \
+            examples/BlynkEdgent

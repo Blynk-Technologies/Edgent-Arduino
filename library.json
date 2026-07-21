@@ -1,0 +1,31 @@
+{
+  "name": "BlynkEdgent",
+  "version": "1.0.0",
+  "description": "Blynk.Edgent for Arduino - WiFi provisioning (BLE or WiFi-AP), secure Blynk.Cloud connectivity and OTA updates out of the box. Works with ESP32 and ESP8266 boards.",
+  "keywords": "blynk, iot, wifi, esp32, esp8266",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name":  "Blynk",
+      "url":   "https://github.com/Blynk-Technologies"
+    },
+    {
+      "name":  "Volodymyr Shymanskyy",
+      "url":   "https://github.com/vshymanskyy",
+      "maintainer": true
+    }
+  ],
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/Blynk-Technologies/Edgent-Arduino.git"
+  },
+  "homepage": "https://blynk.io",
+  "frameworks": "arduino",
+  "platforms": ["espressif32", "espressif8266"],
+  "dependencies": [
+    { "name": "Blynk",             "owner": "blynkkk" },
+    { "name": "ArduinoJson",       "owner": "bblanchon" },
+    { "name": "ArduinoHttpClient", "owner": "arduino-libraries" }
+  ]
+}

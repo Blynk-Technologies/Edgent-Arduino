@@ -1,0 +1,284 @@
+/*
+ * Copyright (c) 2024 Blynk Technologies Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef BlynkNetMgrClients_h
+#define BlynkNetMgrClients_h
+
+#include <BlynkApiArduino.h>
+#include <Blynk/BlynkProtocol.h>
+#include <Adapters/BlynkArduinoClient.h>
+
+#if defined(CONFIG_USE_SSL)
+
+#if defined(ESP32)
+  #include <WiFiClientSecure.h>
+#elif defined(ESP8266)
+  #include <WiFiClientSecure.h>
+#endif
+
+/*
+ * 4096 bit, ISRG Root X1,            expires: Mon, 04 Jun 2035 11:04:38 GMT
+ * 2048 bit, Amazon Root CA 1,        expires: Sun, 17 Jan 2038 00:00:00 GMT
+ * 2048 bit, DigiCert Global Root G2, expires: Fri, 15 Jan 2038 12:00:00 GMT
+ */
+static const char ROOT_CA_CERT[] PROGMEM = R"EOF(
+-----BEGIN CERTIFICATE-----
+MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
+WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu
+ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY
+MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc
+h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+
+0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U
+A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW
+T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH
+B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC
+B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv
+KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn
+OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn
+jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw
+qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI
+rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV
+HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq
+hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL
+ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ
+3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK
+NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5
+ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur
+TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC
+jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc
+oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq
+4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA
+mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d
+emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIDQTCCAimgAwIBAgITBmyfz5m/jAo54vB4ikPmljZbyjANBgkqhkiG9w0BAQsF
+ADA5MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRkwFwYDVQQDExBBbWF6
+b24gUm9vdCBDQSAxMB4XDTE1MDUyNjAwMDAwMFoXDTM4MDExNzAwMDAwMFowOTEL
+MAkGA1UEBhMCVVMxDzANBgNVBAoTBkFtYXpvbjEZMBcGA1UEAxMQQW1hem9uIFJv
+b3QgQ0EgMTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALJ4gHHKeNXj
+ca9HgFB0fW7Y14h29Jlo91ghYPl0hAEvrAIthtOgQ3pOsqTQNroBvo3bSMgHFzZM
+9O6II8c+6zf1tRn4SWiw3te5djgdYZ6k/oI2peVKVuRF4fn9tBb6dNqcmzU5L/qw
+IFAGbHrQgLKm+a/sRxmPUDgH3KKHOVj4utWp+UhnMJbulHheb4mjUcAwhmahRWa6
+VOujw5H5SNz/0egwLX0tdHA114gk957EWW67c4cX8jJGKLhD+rcdqsq08p8kDi1L
+93FcXmn/6pUCyziKrlA4b9v7LWIbxcceVOF34GfID5yHI9Y/QCB/IIDEgEw+OyQm
+jgSubJrIqg0CAwEAAaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC
+AYYwHQYDVR0OBBYEFIQYzIU07LwMlJQuCFmcx7IQTgoIMA0GCSqGSIb3DQEBCwUA
+A4IBAQCY8jdaQZChGsV2USggNiMOruYou6r4lK5IpDB/G/wkjUu0yKGX9rbxenDI
+U5PMCCjjmCXPI6T53iHTfIUJrU6adTrCC2qJeHZERxhlbI1Bjjt/msv0tadQ1wUs
+N+gDS63pYaACbvXy8MWy7Vu33PqUXHeeE6V/Uq2V8viTO96LXFvKWlJbYK8U90vv
+o/ufQJVtMVT8QtPHRh8jrdkPSHCa2XV4cdFyQzR1bldZwgJcJmApzyMZFo6IQ6XU
+5MsI+yMRQ+hDKXJioaldXgjUkK642M4UwtBV8ob2xJNDd2ZhwLnoQdeXeGADbkpy
+rqXRfboQnoZsG4q5WTP468SQvvG5
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIDjjCCAnagAwIBAgIQAzrx5qcRqaC7KGSxHQn65TANBgkqhkiG9w0BAQsFADBh
+MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
+d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBH
+MjAeFw0xMzA4MDExMjAwMDBaFw0zODAxMTUxMjAwMDBaMGExCzAJBgNVBAYTAlVT
+MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5j
+b20xIDAeBgNVBAMTF0RpZ2lDZXJ0IEdsb2JhbCBSb290IEcyMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuzfNNNx7a8myaJCtSnX/RrohCgiN9RlUyfuI
+2/Ou8jqJkTx65qsGGmvPrC3oXgkkRLpimn7Wo6h+4FR1IAWsULecYxpsMNzaHxmx
+1x7e/dfgy5SDN67sH0NO3Xss0r0upS/kqbitOtSZpLYl6ZtrAGCSYP9PIUkY92eQ
+q2EGnI/yuum06ZIya7XzV+hdG82MHauVBJVJ8zUtluNJbd134/tJS7SsVQepj5Wz
+tCO7TG1F8PapspUwtP1MVYwnSlcUfIKdzXOS0xZKBgyMUNGPHgm+F6HmIcr9g+UQ
+vIOlCsRnKPZzFBQ9RnbDhxSJITRNrw9FDKZJobq7nMWxM4MphQIDAQABo0IwQDAP
+BgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBhjAdBgNVHQ4EFgQUTiJUIBiV
+5uNu5g/6+rkS7QYXjzkwDQYJKoZIhvcNAQELBQADggEBAGBnKJRvDkhj6zHd6mcY
+1Yl9PMWLSn/pvtsrF9+wX3N3KjITOYFnQoQj8kVnNeyIv/iPsGEMNKSuIEyExtv4
+NeF22d+mQrvHRAiGfzZ0JFrabA0UWTW98kndth/Jsw1HKj2ZL7tcu7XUIOGZX1NG
+Fdtom/DzMNU+MeKNhJ7jitralj41E6Vf8PlwUHBHQRFXGU7Aj64GxJUTFy8bJZ91
+8rGOmaFvE7FBcf6IKshPECBV1/MUReXgRPTqh5Uykw7+U0b6LJ3/iyK5S9kJRaTe
+pLiaWN0bfVKfjllDiIGknibVb63dDcY3fe0Dkhvld1927jyNxF1WW6LZZm6zNTfl
+MrY=
+-----END CERTIFICATE-----
+)EOF";
+
+#endif // CONFIG_USE_SSL
+
+
+#if defined(NetMgr_WiFi) && defined(ESP32)
+  #define BlynkHasWiFiClient
+  WiFiClient       _blynkWiFiClient;
+  inline
+  void setupClientWiFi() {
+    _blynkWiFiClient.setTimeout(3);
+  }
+  #if defined(CONFIG_USE_SSL)
+  #define BlynkHasWiFiClientSSL
+  WiFiClientSecure _blynkWiFiClientSSL;
+  #endif
+  void setupClientWiFi() {
+    // Connection timeout (ms)
+    _blynkWiFiClient.setTimeout(3);
+    #if defined(CONFIG_USE_SSL)
+    _blynkWiFiClientSSL.setCACert(ROOT_CA_CERT);
+    _blynkWiFiClientSSL.setHandshakeTimeout(10); // seconds
+    #endif
+  }
+#elif defined(NetMgr_WiFi) && defined(ESP8266)
+  #define BlynkHasWiFiClient
+  WiFiClient       _blynkWiFiClient;
+  #if defined(CONFIG_USE_SSL)
+  #define BlynkHasWiFiClientSSL
+  WiFiClientSecure _blynkWiFiClientSSL;
+  X509List         _blynkCert(ROOT_CA_CERT);
+  #endif
+  void setupClientWiFi() {
+    // Connection timeout (ms)
+    _blynkWiFiClient.setTimeout(3000);
+    #if defined(CONFIG_USE_SSL)
+    _blynkWiFiClientSSL.setTimeout(3000);
+    _blynkWiFiClientSSL.setBufferSizes(2048, 512);
+    _blynkWiFiClientSSL.setTrustAnchors(&_blynkCert);
+    #endif
+  }
+#endif
+
+
+inline void setupNetMgrClients() {
+#if defined(BlynkHasWiFiClient)
+  setupClientWiFi();
+#endif
+}
+
+Client* getConnectedClient(const String& protocol,
+                           const String& host, int port,
+                                 String& type)
+{
+  // Try to connect using the specified protocol (WiFi only)
+
+#if defined(BlynkHasWiFiClient)
+  _blynkWiFiClient.stop();
+#endif
+#if defined(BlynkHasWiFiClientSSL)
+  _blynkWiFiClientSSL.stop();
+#endif
+
+  int attempts = 0;
+  if (protocol == "http" || protocol == "tcp") {
+    // Non-SSL connections
+#if defined(BlynkHasWiFiClient)
+    if ((type == "any" || type == "wifi") && NetMgrWiFi.isConnected()) {
+      attempts++;
+      if (_blynkWiFiClient.connect(host.c_str(), port)) {
+        type = "wifi";
+        return &_blynkWiFiClient;
+      }
+    }
+#endif
+  } else if (protocol == "https" || protocol == "tls") {
+    // SSL connections
+#if defined(BlynkHasWiFiClientSSL)
+    if ((type == "any" || type == "wifi") && NetMgrWiFi.isConnected()) {
+      attempts++;
+      if (_blynkWiFiClientSSL.connect(host.c_str(), port)) {
+        type = "wifi";
+        return &_blynkWiFiClientSSL;
+      }
+    }
+#endif
+  } else {
+    LOG_E("Unsupported protocol: %s", protocol.c_str());
+    return NULL;
+  }
+
+  if (!attempts) {
+    LOG_E("Network interface not found");
+    return NULL;
+  }
+
+  type = "none";
+  return NULL;
+}
+
+Client* getConnectedClient(const String& protocol,
+                           const String& host, int port)
+{
+  String type = "any";
+  return getConnectedClient(protocol, host, port, type);
+}
+
+template <typename T>
+class BlynkNetMgrClient
+    : public BlynkArduinoClientGen<T>
+{
+public:
+    BlynkNetMgrClient() {}
+
+    const String& getConnNetworkType() const { return _network; }
+
+    String getServerDomain() const {
+        return BlynkArduinoClientGen<T>::domain;
+    }
+
+    bool _connectClient(const String& protocol, uint16_t p) {
+        const char* server = BlynkArduinoClientGen<T>::domain;
+        _network = "any";
+        LOG_I("Connecting to %s:%d", server, p);
+        if (Client* c = getConnectedClient(protocol, server, p, _network)) {
+            BlynkArduinoClientGen<T>::setClient(c);
+            BlynkArduinoClientGen<T>::port = p;
+            BlynkArduinoClientGen<T>::isConn = true;
+            return true;
+        }
+        return false;
+    }
+
+    bool connect() {
+#ifdef CONFIG_USE_SSL
+        if (_connectClient("tls", 443))  { return true; }
+        if (_connectClient("tls", 9443)) { return true; }
+#else
+        if (_connectClient("tcp", 80))   { return true; }
+        if (_connectClient("tcp", 8080)) { return true; }
+#endif
+        // No client connected
+        BlynkArduinoClientGen<T>::port = 0;
+        BlynkArduinoClientGen<T>::isConn = false;
+        return false;
+    }
+private:
+    String _network;
+};
+
+template <typename Transport>
+class BlynkClass
+    : public BlynkProtocol<Transport>
+{
+    typedef BlynkProtocol<Transport> Base;
+public:
+    BlynkClass(Transport& transp)
+        : Base(transp) {}
+
+    void config(const char* auth,
+                const char* domain = BLYNK_DEFAULT_DOMAIN)
+    {
+        Base::begin(auth);
+        this->conn.begin(domain, 0);
+    }
+
+    void config(const char* auth,
+                IPAddress   ip)
+    {
+        Base::begin(auth);
+        this->conn.begin(ip, 0);
+    }
+
+};
+
+typedef BlynkNetMgrClient<Client> BlynkTransport;
+
+static BlynkTransport       _blynkTransport;
+BlynkClass<BlynkTransport>  Blynk(_blynkTransport);
+
+#include <BlynkWidgets.h>
+
+#endif // BlynkNetMgrClients_h
+

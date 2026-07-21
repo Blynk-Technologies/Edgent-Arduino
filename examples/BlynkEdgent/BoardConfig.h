@@ -1,0 +1,175 @@
+/*
+ * Copyright (c) 2026 Blynk Technologies Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#pragma once
+
+/*
+ * Board configuration (see examples below).
+ */
+
+#if defined(ARDUINO_WROVER_BOARD)
+
+  #define BOARD_BUTTON_PIN            15
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN_R             0
+  #define BOARD_LED_PIN_G             2
+  #define BOARD_LED_PIN_B             4
+  #define BOARD_LED_INVERSE           false
+  #define BOARD_LED_BRIGHTNESS        128
+
+#elif defined(ARDUINO_TTGO_T7)
+
+  // This board does not have a built-in button
+  // Connect a button to gpio0 <> GND
+  #define BOARD_BUTTON_PIN            0
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN               19
+  #define BOARD_LED_INVERSE           false
+  #define BOARD_LED_BRIGHTNESS        64
+
+#elif defined(ARDUINO_TTGO_T7_S3)
+
+  #define BOARD_BUTTON_PIN            0
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN               17
+  #define BOARD_LED_INVERSE           false
+  #define BOARD_LED_BRIGHTNESS        64
+
+#elif defined(ARDUINO_XIAO_ESP32C5)
+
+  #define BOARD_BUTTON_PIN            28
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN               27
+  #define BOARD_LED_INVERSE           true
+  #define BOARD_LED_BRIGHTNESS        64
+
+#elif defined(ARDUINO_WEACT_ESP32C5)
+
+  #define BOARD_BUTTON_PIN            28
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN_WS2812        27
+  #define BOARD_LED_BRIGHTNESS        64
+
+#elif defined(ARDUINO_TTGO_TETH_POE)
+
+  // This board does not have a built-in button
+  // Connect a button to gpio0 <> GND
+  #define BOARD_BUTTON_PIN            0
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  // This board does not have a built-in indicator
+  #define BOARD_LED_PIN               2
+
+#elif defined(ARDUINO_TTGO_TCALL_SIM800) || defined(ARDUINO_TTGO_TPCIE)
+
+  // This board does not have a built-in button
+  // Connect a button to gpio0 <> GND
+  #define BOARD_BUTTON_PIN            0
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN               LED_GPIO
+  #define BOARD_LED_INVERSE           LED_INVERSE
+  #define BOARD_LED_BRIGHTNESS        64
+
+#elif defined(ARDUINO_TTGO_T_OI)
+
+  // This board does not have a built-in button
+  // Connect a button to gpio6 <> GND
+  #define BOARD_BUTTON_PIN            6
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN               3
+  #define BOARD_LED_INVERSE           false
+  #define BOARD_LED_BRIGHTNESS        64
+
+#elif defined(ARDUINO_ESP32C3_DEV_MODULE)
+
+  #define BOARD_BUTTON_PIN            9
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN_WS2812        8
+  #define BOARD_LED_INVERSE           false
+  #define BOARD_LED_BRIGHTNESS        32
+
+#elif defined(ARDUINO_ESP32S2_DEV_KIT)
+
+  #define BOARD_BUTTON_PIN            0
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN               19
+  #define BOARD_LED_INVERSE           false
+  #define BOARD_LED_BRIGHTNESS        128
+
+#elif defined(ARDUINO_WILOBE) || defined(ARDUINO_WILOBE_V2)
+
+  #define BOARD_BUTTON_PIN            35
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+  #define BOARD_LED_PIN               2
+
+#elif defined(ARDUINO_EDGEBOX_ESP100)
+
+  #define BOARD_BUTTON_PIN            0
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN               LED_ACT
+  #define BOARD_LED_INVERSE           true
+  #define BOARD_LED_BRIGHTNESS        255
+
+#elif defined(ARDUINO_UBLOX_NINA_W10)
+
+  #define BOARD_LED_PIN_R             27                    // Set R,G,B pins - if your LED is PWM RGB
+  #define BOARD_LED_PIN_G             25
+  #define BOARD_LED_PIN_B             26
+  #define BOARD_LED_INVERSE           true                  // true if LED is common anode, false if common cathode
+  #define BOARD_LED_BRIGHTNESS        64                    // 0..255 brightness control
+
+#elif defined(ARDUINO_ESP8266_WITTY)
+
+  #define BOARD_BUTTON_PIN            4
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN_R             15
+  #define BOARD_LED_PIN_G             12
+  #define BOARD_LED_PIN_B             13
+  #define BOARD_LED_INVERSE           false
+  #define BOARD_LED_BRIGHTNESS        160
+  #define BOARD_LED_MIN_BRIGHTNESS    52
+
+#else
+
+  #warning "Custom board configuration is used"
+
+  #define BOARD_BUTTON_PIN            0                     // Pin where user button is attached
+  #define BOARD_BUTTON_ACTIVE_LOW     true                  // true if button is "active-low"
+
+  //#define BOARD_LED_PIN             2                     // Set LED pin - if you have a single-color LED attached
+  //#define BOARD_LED_PIN_R           15                    // Set R,G,B pins - if your LED is PWM RGB
+  //#define BOARD_LED_PIN_G           12
+  //#define BOARD_LED_PIN_B           13
+  //#define BOARD_LED_PIN_WS2812      4                     // Set if your LED is WS2812 RGB
+  #define BOARD_LED_INVERSE           false                 // true if LED is common anode, false if common cathode
+  #define BOARD_LED_BRIGHTNESS        64                    // 0..255 brightness control
+
+#endif
+
+#define BUTTON_HOLD_TIME_LONG_PRESS    1000
+#define BUTTON_HOLD_TIME_INDICATION    4000
+#define BUTTON_HOLD_TIME_CONFIG_RESET  10000
+#define BUTTON_HOLD_TIME_CANCEL        15000
+
+#define BOARD_PWM_RANGE                256
+
+#if defined(ESP32)
+  //#define USE_TICKER
+  #define USE_PTHREAD
+#elif defined(ESP8266)
+  #define USE_TICKER
+#endif
