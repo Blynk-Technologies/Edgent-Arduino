@@ -10,6 +10,7 @@
 #include <BlynkApiArduino.h>
 #include <Blynk/BlynkProtocol.h>
 #include <Adapters/BlynkArduinoClient.h>
+#include "NetMgr.h"
 
 #if defined(CONFIG_USE_SSL)
 
@@ -106,10 +107,6 @@ MrY=
 #if defined(NetMgr_WiFi) && defined(ESP32)
   #define BlynkHasWiFiClient
   WiFiClient       _blynkWiFiClient;
-  inline
-  void setupClientWiFi() {
-    _blynkWiFiClient.setTimeout(3);
-  }
   #if defined(CONFIG_USE_SSL)
   #define BlynkHasWiFiClientSSL
   WiFiClientSecure _blynkWiFiClientSSL;
@@ -118,6 +115,7 @@ MrY=
     // Connection timeout (ms)
     _blynkWiFiClient.setTimeout(3);
     #if defined(CONFIG_USE_SSL)
+    _blynkWiFiClientSSL.setTimeout(3);
     _blynkWiFiClientSSL.setCACert(ROOT_CA_CERT);
     _blynkWiFiClientSSL.setHandshakeTimeout(10); // seconds
     #endif
