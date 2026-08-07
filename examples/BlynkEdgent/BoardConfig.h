@@ -143,6 +143,16 @@
   #define BOARD_LED_BRIGHTNESS        160
   #define BOARD_LED_MIN_BRIGHTNESS    52
 
+#elif defined(ARDUINO_SEEED_WIO_TERMINAL) || defined(SEEED_WIO_TERMINAL) || defined(WIO_TERMINAL)
+
+  #define BOARD_BUTTON_PIN            WIO_KEY_A
+  #define BOARD_BUTTON_ACTIVE_LOW     true
+
+  #define BOARD_LED_PIN               LED_BUILTIN
+  #define BOARD_LED_INVERSE           false
+  #define BOARD_LED_BRIGHTNESS        255
+  #define BOARD_PWM_RANGE             1024
+
 #else
 
   #warning "Custom board configuration is used"
@@ -163,13 +173,16 @@
 #define BUTTON_HOLD_TIME_LONG_PRESS    1000
 #define BUTTON_HOLD_TIME_INDICATION    4000
 #define BUTTON_HOLD_TIME_CONFIG_RESET  10000
-#define BUTTON_HOLD_TIME_CANCEL        15000
+#define BUTTON_HOLD_TIME_CANCEL        20000
 
+#if !defined(BOARD_PWM_RANGE)
 #define BOARD_PWM_RANGE                256
+#endif
 
-#if defined(ESP32)
-  //#define USE_TICKER
-  #define USE_PTHREAD
-#elif defined(ESP8266)
-  #define USE_TICKER
+#if !defined(BOARD_LED_MIN_BRIGHTNESS)
+#define BOARD_LED_MIN_BRIGHTNESS       4
+#endif
+
+#if !defined(BOARD_LED_INVERSE)
+#define BOARD_LED_INVERSE              0
 #endif
