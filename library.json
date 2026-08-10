@@ -22,10 +22,5 @@
   },
   "homepage": "https://blynk.io",
   "frameworks": "arduino",
-  "platforms": ["espressif32", "espressif8266"],
-  "dependencies": [
-    { "name": "Blynk",             "owner": "blynkkk" },
-    { "name": "ArduinoJson",       "owner": "bblanchon" },
-    { "name": "ArduinoHttpClient", "owner": "arduino-libraries" }
-  ]
+  "platforms": ["espressif32", "espressif8266"]
 }

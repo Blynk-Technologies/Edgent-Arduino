@@ -99,7 +99,7 @@ bool BlynkInject::isAppDisconnected() {
 
 static inline
 void sendMsg(const char* str) {
-    server.send(200, "text/json", str);
+    server.send(200, "application/json", str);
     //LOG_D("<< %s", str);
 }
 
@@ -107,7 +107,7 @@ static inline
 void sendMsg(const void* data, unsigned len) {
     //LOG_D("<< %s", data);
     server.setContentLength(len);
-    server.send(200, "text/json", "");
+    server.send(200, "application/json", "");
     server.sendContent((const char*)data, len);
 }
 
