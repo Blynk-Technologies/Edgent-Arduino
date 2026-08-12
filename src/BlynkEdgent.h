@@ -60,6 +60,10 @@ public:
     return stateStr[m];
   }
 
+  const char* getStateName() {
+    return getStateName(_state);
+  }
+
   void setConfigTimeout(int timeout) {
     _configTimeoutMs = BlynkMathClamp(timeout, 60, 3600) * 1000;
   }

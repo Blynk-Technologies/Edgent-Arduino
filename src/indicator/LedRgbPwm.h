@@ -9,8 +9,7 @@
 #pragma once
 
 #include <Arduino.h>
-
-extern const unsigned char _gamma8[256];
+#include "GammaTable.h"
 
 class LedRgbPwm {
 public:
@@ -48,7 +47,7 @@ public:
 
 private:
   uint32_t toPwm(uint8_t v) const {
-    return (uint32_t)(_gamma8[v]) * (_pwmRange / 256);
+    return (uint32_t)(blnk_gamma8[v]) * (_pwmRange / 256);
   }
 
   uint8_t  _pinR, _pinG, _pinB;

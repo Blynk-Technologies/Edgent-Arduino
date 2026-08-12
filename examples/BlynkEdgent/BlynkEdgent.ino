@@ -1,17 +1,38 @@
-
 /******************************************************************************
- * 1. In ArduinoIDE, select:
- *    Tools -> Board -> esp32 -> Your Board
- *    Tools -> Partition Scheme -> "RainMaker 4MB" (or 8MB)
- *    It is highly recommended to create a custom Partition Scheme
+ * 1. In the Arduino IDE, select:
+ *    Tools -> Board -> Select your board
+ *
+ *    For ESP32:
+ *      Tools -> Partition Scheme -> "RainMaker 4MB" (or 8MB)
+ *    It is highly recommended to create a custom partition scheme
  *    optimized for your project.
  *
+ *    For ESP8266:
+ *      Tools -> Flash Size -> At least 128 KB FS
+ *
  * 2. In BoardConfig.h, configure the LED and button pins.
+ *    Or, select a predefined configuration at the top of this sketch, e.g.:
+ *    #define ARDUINO_XIAO_ESP32C5
  *
  * 3. Fill in TEMPLATE_ID and TEMPLATE_NAME from your Blynk Template below.
  *    Read more: https://bit.ly/BlynkInject
  *
+ * 4. Install the required libraries:
+ *    http://librarymanager#Blynk                v1.3.5
+ *    http://librarymanager#Adafruit_NeoPixel    v1.15.5
+ *    http://librarymanager#Preferences          v2.3.0
+ *    http://librarymanager#OneButton            v2.6.2
+ *    http://librarymanager#ArduinoJson          v7.4.3
+ *    http://librarymanager#ArduinoHttpClient    v0.6.1
+ *    http://librarymanager#NimBLE-Arduino       v2.5.1
+ *
+ * 5. Upload the sketch to your board and open the Serial Monitor at 115200 baud.
+ *
+ * 6. Use the Blynk IoT App to provision your device:
+ *    Menu -> Add new device -> Find devices nearby -> Select your device
+ *
  *****************************************************************************/
+
 //#define BLYNK_TEMPLATE_ID           "TMPxxxxxx"
 //#define BLYNK_TEMPLATE_NAME         "Device"
 
@@ -33,11 +54,20 @@ void setup()
   Serial.begin(115200);
   Serial.println();
 
-  interaction.begin();
+  // The amount of time (in seconds) to wait for the user to configure the device.
+  // If configuration is skipped, the device will enter IDLE mode. Default: 10 min
+  BlynkEdgent.setConfigTimeout(10*60);
 
   // The amount of times the board enters the config mode automatically.
-  // NOTE: 0 means unlimited, and is only useful for testing. Default: 5.
+  // NOTE: 0 means unlimited, and is only useful for testing. Default: 5
   BlynkEdgent.setConfigSkipLimit(0);
+
+  // Edgent state indication and button interaction
+  interaction.begin();
+  BlynkEdgent.onStateChange([](){
+    Serial.printf("State: %s\n", BlynkEdgent.getStateName());
+    interaction.updateIndicator();
+  });
 
   // Initialize Blynk.Edgent
   BlynkEdgent.begin();
