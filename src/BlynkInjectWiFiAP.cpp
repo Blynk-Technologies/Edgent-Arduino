@@ -180,10 +180,15 @@ void BlynkInject::setupServer() {
       dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure); // Return code for non-accessible domains
 #ifdef WIFI_CAPTIVE_PORTAL_ENABLE
       dnsServer.start(DNS_PORT, "*", WiFi.softAPIP()); // Point all to our IP
-      server.onNotFound(handleRoot);
+      server.onNotFound([]() {
+        server.send(200, "text/html", configForm);
+      });
 #else
       dnsServer.start(DNS_PORT, CONFIG_AP_URL, WiFi.softAPIP());
       LOG_I("WiFi AP config page: %s", CONFIG_AP_URL);
+      server.onNotFound([]() {
+        server.send(404, "text/plain", "Not found");
+      });
 #endif
 
       server.on("/update", HTTP_GET, []() {

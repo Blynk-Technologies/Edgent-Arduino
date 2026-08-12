@@ -1,6 +1,7 @@
 /******************************************************************************
  * 1. In the Arduino IDE, select:
  *    Tools -> Board -> Select your board
+ *    Tools -> Port  -> Select your port
  *
  *    For ESP32:
  *      Tools -> Partition Scheme -> "RainMaker 4MB" (or 8MB)
