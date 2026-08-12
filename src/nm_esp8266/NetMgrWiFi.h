@@ -527,12 +527,14 @@ public:
             }            
 
             _error = NETMGR_ERR_NONE;
+            WiFi.mode(WIFI_STA);
             WiFi.disconnect();
 
             WiFi.setHostname(_hostname.c_str());
             if (WiFi.begin(_foundBest->ssid.c_str(),
                            _foundBest->psk.c_str(),
-                           _foundBest->channel, _foundBest->bssid))
+                           _foundBest->channel,
+                           macIsValid(_foundBest->bssid) ? _foundBest->bssid : NULL))
             {
                 setState(NETMGR_CONNECTING);
             } else {
