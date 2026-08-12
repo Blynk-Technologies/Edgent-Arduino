@@ -103,6 +103,13 @@ jobs:
             NimBLE-Arduino \
             Preferences
 
+      - name: Patch example for CI
+        run: |
+          sed -i \
+            -e 's|^//#define BLYNK_TEMPLATE_ID.*|#define BLYNK_TEMPLATE_ID         "TMPL000000"|' \
+            -e 's|^//#define BLYNK_TEMPLATE_NAME.*|#define BLYNK_TEMPLATE_NAME         "Device"|' \
+            examples/BlynkEdgent/BlynkEdgent.ino
+
       - name: Compile Blynk.Edgent example
         run: |
           arduino-cli compile \

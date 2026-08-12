@@ -20,13 +20,15 @@
 #elif defined(ESP32)
   #include "BlynkBleNimBLE.h"
   //#include "BlynkBleBluedroid.h"
+#elif defined(ARDUINO_SEEED_WIO_TERMINAL) || defined(SEEED_WIO_TERMINAL) || defined(WIO_TERMINAL)
+  #include "BlynkBleWioTerminal.h"
 #endif
 
 static BlynkBLE     _ble;
 
 #ifdef CONFIG_USE_OTA_BLE
 #include "BlynkBleOTA.h"
-static BlynkBleOTA*       _ota;
+static BlynkBleOTA* _ota;
 #endif
 
 static inline
@@ -114,7 +116,7 @@ void BlynkInject::reportStatus(InjectStatus status) {
 
 void BlynkInject::reportNetStatus() {
     if (!_started) return;
-    char buff[128];
+    char buff[256];
 #ifdef NetMgr_WiFi
     {
         JsonDocument writer;
