@@ -21,7 +21,7 @@
  * 2048 bit, Amazon Root CA 1,        expires: Sun, 17 Jan 2038 00:00:00 GMT
  * 2048 bit, DigiCert Global Root G2, expires: Fri, 15 Jan 2038 12:00:00 GMT
  */
-static const char ROOT_CA_CERT[] PROGMEM = R"EOF(
+static const char ROOT_CA_CERT[] = R"EOF(
 -----BEGIN CERTIFICATE-----
 MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
 TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh

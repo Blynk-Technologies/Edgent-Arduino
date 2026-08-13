@@ -24,6 +24,7 @@
   #if CONFIG_BT_BLE_ENABLED || CONFIG_BT_NIMBLE_ENABLED
     // Boards with BLE hardware use BLE-assisted provisioning (via NimBLE-Arduino).
     #define CONFIG_USE_INJECT_BLE
+    #define CONFIG_USE_OTA_BLE
   #else
     #define CONFIG_USE_INJECT_WIFIAP
   #endif
@@ -31,9 +32,9 @@
   #define CONFIG_USE_SSL
   #define CONFIG_USE_INJECT_WIFIAP
 #elif defined(SEEED_WIO_TERMINAL)
-  // TODO: #define CONFIG_USE_SSL
+  #define CONFIG_USE_SSL
   #define CONFIG_USE_INJECT_BLE
-  #define WIFI_NET_CONNECT_TIMEOUT   70000
+  #define CONFIG_USE_OTA_BLE
 #elif defined(PARTICLE)
   // #define CONFIG_USE_SSL - not supported on Particle devices
   #define CONFIG_USE_INJECT_BLE

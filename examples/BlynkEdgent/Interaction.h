@@ -147,7 +147,7 @@ public:
         BLYNK_PRINT.println("Resetting configuration");
         BlynkEdgent.resetConfig();
       } else {
-        BLYNK_PRINT.printf("Button: Released (%d ms)\n", passed);
+        BLYNK_PRINT.printf("Button: Released (%lu ms)\n", (unsigned long)passed);
       }
       _instance->_willReset = false;
       _instance->updateIndicator();

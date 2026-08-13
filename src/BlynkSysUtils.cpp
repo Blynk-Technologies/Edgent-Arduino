@@ -429,7 +429,7 @@ String systemGetDeviceUID() {
 
 #elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_NRF5) || defined(ARDUINO_ARCH_RP2040)
 
-#include <DigestEngineSHA256.h>
+#include <digests/DigestEngines.h>
 
 String systemGetDeviceUID() {
   static String result;

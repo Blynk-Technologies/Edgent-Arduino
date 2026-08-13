@@ -209,9 +209,6 @@ void BlynkInject::run() {
     if (!_started) return;
 
     parseMessage();
-#ifdef CONFIG_USE_OTA_BLE
-    if (_ota) { _ota->run(); }
-#endif
 }
 
 void BlynkInject::parseMessage() {
@@ -350,8 +347,10 @@ void BlynkInject::parseMessage() {
         char buff[256];
         for (int i = 0; i < wifi_nets; i++) {
           String ssid, sec, bssid;
-          int chan, rssi;
-          NetMgrWiFi.scanGetResult(i, ssid, sec, rssi, bssid, chan);
+          int chan = -1, rssi = 0;
+          if (!NetMgrWiFi.scanGetResult(i, ssid, sec, rssi, bssid, chan)) {
+            continue;
+          }
           // skip weak and hidden networks
           if (rssi >= -90 && ssid.length()) {
 

@@ -23,7 +23,7 @@ class NetMgrSeeedRpcWiFi
     class ApEntry {
     public:
         ApEntry(int8_t id)
-            : id(id), rssi(0)
+            : id(id), rssi(0), security(WIFI_AUTH_MAX)
             , channel(0), hidden(false)
         {
             memset(bssid, 0, sizeof(bssid));
@@ -191,8 +191,10 @@ public:
                 _error = NETMGR_ERR_NETWORK_NOT_FOUND;
                 break;
             default:
-                LOG_D("Disconnected (%d)", reason);
-                _error = NETMGR_ERR_UNKNOWN;
+                if ((int)reason != 0) {
+                    LOG_D("Disconnected (%d)", reason);
+                    _error = NETMGR_ERR_UNKNOWN;
+                }
             }
             if (_state == NETMGR_CONNECTED) {
                 resetScanInterval();
@@ -254,9 +256,11 @@ public:
     bool supports5GHz() { return true; }
     bool supportsStaticIP() { return true; }
 
+    // WiFi.status() flaps while associating: it re-checks wifi_is_connected_to_ap()
+    // on every call and downgrades itself to WL_DISCONNECTED. Gate it on the state
+    // machine, so nothing starts using the network before we settle in CONNECTED.
     bool isConnected() {
-        return (WiFi.status() == WL_CONNECTED &&
-                ipIsValid(WiFi.localIP()));
+        return (_state == NETMGR_CONNECTED && isLinkUp());
     }
 
     Error getError() const {
@@ -517,7 +521,7 @@ public:
                       scanResult, _foundList.size(),
                       millis() - _lastScanTime);
 
-                if (isConnected()) {
+                if (isLinkUp()) {    // we're in SCANNING, so isConnected() cannot apply here
                     setState(NETMGR_CONNECTED);
                 } else if ((_foundBest = findBestNetwork())) {
                     setState(NETMGR_START_CONNECTING);
@@ -567,15 +571,24 @@ public:
                 // If dns2 is zero, WiFi.config will treat it as 0.0.0.0 (ok).
                 WiFi.config(_foundBest->localIP, _foundBest->gateway, _foundBest->subnet, _foundBest->dns1, _foundBest->dns2);
             } else {
-                WiFi.config(IPAddress(), IPAddress(), IPAddress()); // ensure DHCP
+                useDHCP();
             }
-            connectWiFi();
-            setState(NETMGR_CONNECTING);
+            if (WiFi.begin(_foundBest->ssid.c_str(),
+                           _foundBest->psk.c_str(),
+                           _foundBest->channel,
+                           macIsValid(_foundBest->bssid) ? _foundBest->bssid : NULL))
+            {
+                setState(NETMGR_CONNECTING);
+            } else {
+                LOG_W("Cannot start connection");
+                WiFi.disconnect(true);
+                setState(NETMGR_START_SCANNING);
+            }
         } break;
         case NETMGR_CONNECTING: {
             if (millis() - _lastCheckTime > 100) {
                 _lastCheckTime = millis();
-                const int status = connectWiFi();
+                const int status = WiFi.status();
                 const bool timeout = (millis() - _lastStateTime > NETMGR_WIFI_CONN_TIMEOUT_MS);
                 if (status == WL_CONNECTED) {
                     LOG_I("WiFi connected "
@@ -659,17 +672,34 @@ public:
         case WIFI_AUTH_WPA_PSK:         return "WPA";
         case WIFI_AUTH_WPA2_PSK:        return "WPA2";
         case WIFI_AUTH_WPA_WPA2_PSK:    return "WPA+WPA2";
-        case WIFI_AUTH_WPA2_ENTERPRISE: return "WPA2-EAP";
+        case WIFI_AUTH_WPA2_ENTERPRISE: return "WPA2 ENT";
         default:                        return "unknown";
       }
     }
 private:
 
-    wl_status_t connectWiFi() {
-        return WiFi.begin(_foundBest->ssid.c_str(),
-                          _foundBest->psk.c_str(),
-                          _foundBest->channel,
-                          macIsValid(_foundBest->bssid) ? _foundBest->bssid : NULL);
+    bool isLinkUp() {
+        return (WiFi.status() == WL_CONNECTED &&
+                ipIsValid(WiFi.localIP()));
+    }
+
+    // Undo a previous static IP configuration.
+    // We cannot use WiFi.config(0,0,0) for this: it kicks off the DHCP client
+    // while the link is still down, and rpcWiFi's tcpip_adapter_dhcpc_start is
+    // a blocking RPC, so it stalls for ~60s until DHCP gives up retrying.
+    // WiFi.begin() starts DHCP itself, right after the AP association succeeds.
+    void useDHCP() {
+        // _useStaticIp is host-side state, only ever written by WiFi.config()
+        struct StaIpMode : public WiFiSTAClass {
+            static void setStatic(bool val) { _useStaticIp = val; }
+        };
+        StaIpMode::setStatic(false);
+
+        tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
+
+        tcpip_adapter_ip_info_t info;
+        memset(&info, 0, sizeof(info));
+        tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &info);
     }
 
     void setState(State s) {

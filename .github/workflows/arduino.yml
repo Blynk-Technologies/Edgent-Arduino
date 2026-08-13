@@ -8,6 +8,12 @@ on:
   workflow_dispatch:
 
 jobs:
+  arduino-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: arduino/arduino-lint-action@v3
+
   build:
     name: Build ${{ matrix.name }}
     runs-on: ubuntu-latest
@@ -20,32 +26,32 @@ jobs:
           - name: esp32
             fqbn: "esp32:esp32:esp32:PartitionScheme=min_spiffs"
             core: esp32:esp32
-            core-version: "3.3.10"
+            core-version: "3.3.11"
             core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
           - name: esp32c3
             fqbn: "esp32:esp32:esp32c3:PartitionScheme=min_spiffs"
             core: esp32:esp32
-            core-version: "3.3.10"
+            core-version: "3.3.11"
             core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
           - name: esp32c6
             fqbn: "esp32:esp32:esp32c6:PartitionScheme=min_spiffs"
             core: esp32:esp32
-            core-version: "3.3.10"
+            core-version: "3.3.11"
             core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
           - name: esp32c5
             fqbn: "esp32:esp32:esp32c5:PartitionScheme=min_spiffs"
             core: esp32:esp32
-            core-version: "3.3.10"
+            core-version: "3.3.11"
             core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
           - name: esp32s2
             fqbn: "esp32:esp32:esp32s2:PartitionScheme=min_spiffs"
             core: esp32:esp32
-            core-version: "3.3.10"
+            core-version: "3.3.11"
             core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
           - name: esp32s3
             fqbn: "esp32:esp32:esp32s3:PartitionScheme=min_spiffs"
             core: esp32:esp32
-            core-version: "3.3.10"
+            core-version: "3.3.11"
             core-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
 
           # ESP32 Arduino Core V2 (legacy)
@@ -66,6 +72,23 @@ jobs:
             core: esp8266:esp8266
             core-version: "3.1.2"
             core-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+            extra-libs: Preferences
+
+          # Seeed Wio Terminal
+          - name: wio-terminal
+            fqbn: "Seeeduino:samd:seeed_wio_terminal"
+            core: Seeeduino:samd
+            core-version: "1.8.6"
+            core-url: https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+            extra-libs: >-
+              Preferences
+              "Seeed Arduino rpcWiFi"
+              "Seeed Arduino rpcUnified"
+              "Seeed Arduino rpcBLE"
+              "Seeed Arduino FS"
+              "Seeed Arduino SFUD"
+              Seeed_Arduino_mbedtls
+              ArduinoOTA
 
     steps:
       - name: Checkout
@@ -96,12 +119,12 @@ jobs:
         run: |
           arduino-cli lib install \
             Blynk \
+            NimBLE-Arduino \
             ArduinoJson \
             ArduinoHttpClient \
             OneButton \
             "Adafruit NeoPixel" \
-            NimBLE-Arduino \
-            Preferences
+            ${{ matrix.extra-libs }}
 
       - name: Patch example for CI
         run: |

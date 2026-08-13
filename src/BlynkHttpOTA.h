@@ -5,7 +5,7 @@
  */
 
 #include <ArduinoHttpClient.h>
-#include <BlynkArduinoUpdate.h>
+#include <updater/BlynkUpdater.h>
 
 static
 bool parseURL(String url, String& protocol, String& host, int& port, String& path)
@@ -56,15 +56,14 @@ bool downloadUpgradeHTTP(HttpClient& http)
     return false;
   }
 
-  String expectedMD5;
+  String expectedSHA256;
 
   while (http.headerAvailable()) {
     String hdr = http.readHeaderName();
     String val = http.readHeaderValue();
     hdr.toLowerCase();
-    if (hdr == "x-md5") {
-      expectedMD5 = val;
-      expectedMD5.toLowerCase();
+    if (hdr == "x-sha256") {
+      expectedSHA256 = val;
     }
   }
 
@@ -74,18 +73,18 @@ bool downloadUpgradeHTTP(HttpClient& http)
     return false;
   }
 
-  if (!expectedMD5.length()) {
-    LOG_E("X-MD5 not defined");
+  if (!expectedSHA256.length()) {
+    LOG_E("X-SHA256 not defined");
     return false;
   }
 
-  if (!ArduinoUpdate.begin()) {
+  if (!ArduinoUpdate.begin(contentLength)) {
     LOG_E("Not enough space to store the update");
     return false;
   }
 
-  if (!ArduinoUpdate.setMD5(expectedMD5.c_str())) {
-    LOG_E("Invalid X-MD5 value: %s", expectedMD5.c_str());
+  if (!ArduinoUpdate.setSHA256(expectedSHA256.c_str())) {
+    LOG_E("Invalid X-SHA256 value: %s", expectedSHA256.c_str());
     ArduinoUpdate.abort();
     return false;
   }
@@ -105,6 +104,7 @@ bool downloadUpgradeHTTP(HttpClient& http)
     }
 
     if (!ArduinoUpdate.write(buff, len)) {
+      ArduinoUpdate.abort();
       return false;
     }
 
@@ -136,7 +136,8 @@ bool downloadUpgradeHTTP(HttpClient& http)
     ArduinoUpdate.apply();
     return true; // should not happen (device reboots)
   } else {
-    LOG_E("MD5 validation failed: %s", ArduinoUpdate.errorString().c_str());
+    LOG_E("Firmware validation failed: %s", ArduinoUpdate.errorString().c_str());
+    ArduinoUpdate.abort();
     return false;
   }
 }

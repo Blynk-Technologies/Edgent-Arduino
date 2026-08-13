@@ -17,7 +17,7 @@
 #include <EdgentSettings.h>
 #include <NetMgr.h>
 #include <BlynkNetMgrClients.h>
-#include <BlynkInject.h>
+#include <inject/BlynkInject.h>
 #include <BlynkSysUtils.h>
 #include <Blynk/BlynkConsole.h>
 #include <BlynkConfigStore.h>

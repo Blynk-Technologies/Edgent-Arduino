@@ -10,7 +10,7 @@
 
 #include "NetMgr.h"
 #include "BlynkSysUtils.h"
-#include "BlynkArduinoUpdate.h"
+#include <updater/BlynkUpdater.h>
 #include <ArduinoJson.h>
 
 #if defined(ESP32)
@@ -300,8 +300,10 @@ void BlynkInject::setupServer() {
         JsonArray arr = doc.to<JsonArray>();
         for (int i = 0; i < wifi_nets; i++) {
           String ssid, sec, bssid;
-          int chan, rssi;
-          NetMgrWiFi.scanGetResult(i, ssid, sec, rssi, bssid, chan);
+          int chan = -1, rssi = 0;
+          if (!NetMgrWiFi.scanGetResult(i, ssid, sec, rssi, bssid, chan)) {
+            continue;
+          }
           // skip weak and hidden networks
           if (rssi >= -90 && ssid.length()) {
 
