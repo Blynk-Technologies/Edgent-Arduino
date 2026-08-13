@@ -63,7 +63,7 @@ protected:
 
     switch (_mode) {
     case STAY_OFF:              return skipLED();
-    case BLINK_YELLOW_SLOW:     return beatLED(COLOR_YELLOW,  (int[]){ 50, 500 });
+    case BLINK_YELLOW_SLOW:     return beatLED(COLOR_YELLOW,  (int[]){ 50, 2000 });
     case BLINK_BLUE_SLOW:       return beatLED(COLOR_BLUE,    (int[]){ 50, 500 });
     case BLINK_BLUE_FAST:       return beatLED(COLOR_BLUE,    (int[]){ 200, 200 });
     case BLINK_GREEN_SLOW:      return beatLED(COLOR_GREEN,   (int[]){ 50, 500 });
