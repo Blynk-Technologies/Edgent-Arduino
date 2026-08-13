@@ -443,7 +443,7 @@ public:
   void startOTA(const String& url) {
     _otaUrl = url;
 
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(SEEED_WIO_TERMINAL)
     // Use HTTP by default
     if (!_otaUrl.endsWith("&s=1")) {
        _otaUrl.replace("https://", "http://");
@@ -479,8 +479,12 @@ private:
   void provisioned() {
     if (_inject._config.intf == "wifi") {
 #ifdef NetMgr_WiFi
+      if (_inject._config.ip.length()) {
         NetMgrWiFi.addNetwork(_inject._config.ssid, _inject._config.pass, _inject._config.ip,
           _inject._config.gw, _inject._config.mask, _inject._config.dns, _inject._config.dns2);
+      } else {
+        NetMgrWiFi.addNetwork(_inject._config.ssid, _inject._config.pass);
+      }
 #endif
     }
     _store.setBlynkHost(_inject._config.host);

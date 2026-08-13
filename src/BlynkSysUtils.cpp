@@ -291,6 +291,38 @@ String systemGetResetReason() {
   return ESP.getResetReason();
 }
 
+#elif defined(ARDUINO_ARCH_RP2040)
+
+String systemGetResetReason() {
+  String reason;
+
+  uint32_t chip_reset_reg = vreg_and_chip_reset_hw->chip_reset;
+
+  if (chip_reset_reg & VREG_AND_CHIP_RESET_CHIP_RESET_HAD_PSM_RESTART_BITS) {
+      reason = "RESCUE_DEBUG";
+  }
+  if (chip_reset_reg & VREG_AND_CHIP_RESET_CHIP_RESET_HAD_RUN_BITS) {
+      reason = "RESET_PIN";
+  }
+  if (chip_reset_reg & VREG_AND_CHIP_RESET_CHIP_RESET_HAD_POR_BITS) {
+      // NOTE: This register is also used for brownout, but there is no way to differentiate between power on and brown out
+      reason = "POWER_ON";
+  }
+
+  // Check watchdog after chip reset since watchdog doesn't clear chip_reset, while chip_reset clears the watchdog
+  // The watchdog is used for software reboots such as resetting after copying a UF2 via the bootloader.
+  if (watchdog_caused_reboot()) {
+      reason = "SOFTWARE";
+  }
+
+  // Actual watchdog usage will set a special value that this function detects.
+  if (watchdog_enable_caused_reboot()) {
+      reason = "WATCHDOG";
+  }
+
+  return reason;
+}
+
 #elif defined(PARTICLE)
 
 String systemGetResetReason() {
@@ -393,6 +425,62 @@ String systemGetDeviceUID() {
 
 String systemGetDeviceUID() {
   return System.deviceID();
+}
+
+#elif defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_ARCH_NRF5) || defined(ARDUINO_ARCH_RP2040)
+
+#include <DigestEngineSHA256.h>
+
+String systemGetDeviceUID() {
+  static String result;
+  if (!result.length()) {
+    if (!result.length()) {
+      // Get unique Device ID
+#if defined(ARDUINO_ARCH_SAMD)
+      uint32_t uid[4] = {
+        SERIAL_NUMBER_WORD_0,
+        SERIAL_NUMBER_WORD_1,
+        SERIAL_NUMBER_WORD_2,
+        SERIAL_NUMBER_WORD_3
+      };
+#elif defined(ARDUINO_ARCH_NRF5)
+      uint32_t uid[2] = {
+        NRF_FICR->DEVICEID[1],
+        NRF_FICR->DEVICEID[0]
+      };
+#elif defined(ARDUINO_ARCH_RP2040)
+      pico_unique_board_id_t uid;
+      pico_get_unique_board_id(&uid);
+#else
+      #warning "Platform not supported"
+      const uint32_t uid = 0;
+#endif
+
+      DigestEngineSHA256 md;
+      for (int i=0; i<4; i++) {
+        md.update(uid, sizeof(uid));
+      }
+      uint8_t uuid[32];
+      md.getDigestBuffer(uuid);
+
+      // Set the UUID version to 4
+      uuid[6] = (uuid[6] & 0x0F) | 0x40;
+      // Set the two most significant bits of the 8th byte to 10 (UUID variant 1)
+      uuid[8] = (uuid[8] & 0x3F) | 0x80;
+
+      // Convert to string format
+      char str[38];
+      snprintf(str, sizeof(str),
+              "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+              uuid[0],  uuid[1], uuid[2], uuid[3],
+              uuid[4],  uuid[5],
+              uuid[6],  uuid[7],
+              uuid[8],  uuid[9],
+              uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
+      result = str;
+    }
+  }
+  return result;
 }
 
 #else

@@ -143,7 +143,7 @@
   #define BOARD_LED_BRIGHTNESS        160
   #define BOARD_LED_MIN_BRIGHTNESS    52
 
-#elif defined(ARDUINO_SEEED_WIO_TERMINAL) || defined(SEEED_WIO_TERMINAL) || defined(WIO_TERMINAL)
+#elif defined(SEEED_WIO_TERMINAL)
 
   #define BOARD_BUTTON_PIN            WIO_KEY_A
   #define BOARD_BUTTON_ACTIVE_LOW     true

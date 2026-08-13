@@ -54,6 +54,13 @@
     typedef NetMgrEsp8266WiFi NetMgrWiFiClass;
     extern NetMgrWiFiClass NetMgrWiFi;
 
+#elif defined(SEEED_WIO_TERMINAL)
+
+    #include <nm_seeed/NetMgrWiFi.h>
+    #define NetMgr_WiFi 1
+    typedef NetMgrSeeedRpcWiFi NetMgrWiFiClass;
+    extern NetMgrWiFiClass NetMgrWiFi;
+
 #elif defined(PARTICLE)
 
   #if Wiring_WiFi

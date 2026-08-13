@@ -20,8 +20,8 @@
 #elif defined(ESP32)
   #include "BlynkBleNimBLE.h"
   //#include "BlynkBleBluedroid.h"
-#elif defined(ARDUINO_SEEED_WIO_TERMINAL) || defined(SEEED_WIO_TERMINAL) || defined(WIO_TERMINAL)
-  #include "BlynkBleWioTerminal.h"
+#elif defined(SEEED_WIO_TERMINAL)
+  #include "BlynkBleSeeedRpcBLE.h"
 #endif
 
 static BlynkBLE     _ble;

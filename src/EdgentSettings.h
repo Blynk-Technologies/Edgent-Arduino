@@ -30,6 +30,10 @@
 #elif defined(ESP8266)
   #define CONFIG_USE_SSL
   #define CONFIG_USE_INJECT_WIFIAP
+#elif defined(SEEED_WIO_TERMINAL)
+  // TODO: #define CONFIG_USE_SSL
+  #define CONFIG_USE_INJECT_BLE
+  #define WIFI_NET_CONNECT_TIMEOUT   70000
 #elif defined(PARTICLE)
   // #define CONFIG_USE_SSL - not supported on Particle devices
   #define CONFIG_USE_INJECT_BLE
@@ -50,9 +54,15 @@
 // Disable built-in analog and digital pin control
 #define BLYNK_NO_BUILTIN
 #define BLYNK_NO_DEFAULT_BANNER
+#define BLYNK_SEND_ATOMIC
 
 // If max connection retries is exceeded, device enters ERROR state and reboots
-#define WIFI_CLOUD_MAX_RETRIES        500
-#define WIFI_NET_CONNECT_TIMEOUT      50000     // ms
-#define WIFI_CLOUD_CONNECT_TIMEOUT    50000     // ms
-
+#if !defined(WIFI_CLOUD_MAX_RETRIES)
+  #define WIFI_CLOUD_MAX_RETRIES      500
+#endif 
+#if !defined(WIFI_NET_CONNECT_TIMEOUT)
+  #define WIFI_NET_CONNECT_TIMEOUT    50000     // ms
+#endif
+#if !defined(WIFI_CLOUD_CONNECT_TIMEOUT)
+  #define WIFI_CLOUD_CONNECT_TIMEOUT  50000     // ms
+#endif

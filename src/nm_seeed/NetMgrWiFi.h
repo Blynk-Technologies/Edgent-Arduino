@@ -3,11 +3,10 @@
  * @copyright  Copyright (c) 2026 Volodymyr Shymanskyy
  */
 
-#ifndef NetMgrEsp8266WiFi_h
-#define NetMgrEsp8266WiFi_h
+#ifndef NetMgrSeeedRpcWiFi_h
+#define NetMgrSeeedRpcWiFi_h
 
-#include <NetMgrUtils.h>
-#include <ESP8266WiFi.h>
+#include <rpcWiFi.h>
 #include <Preferences.h>
 #include <list>
 
@@ -19,7 +18,7 @@
 #define NETMGR_WIFI_SCAN_TIMEOUT_MS 15000
 #define NETMGR_WIFI_CONN_TIMEOUT_MS 25000
 
-class NetMgrEsp8266WiFi
+class NetMgrSeeedRpcWiFi
 {
     class ApEntry {
     public:
@@ -33,6 +32,7 @@ class NetMgrEsp8266WiFi
         // Dynamic
         int8_t    id;
         int       rssi;
+        wifi_auth_mode_t security;
 
         // Persistent
         String    ssid;
@@ -164,15 +164,42 @@ public:
     }
 
 public:
-    NetMgrEsp8266WiFi() {}
+    NetMgrSeeedRpcWiFi() {}
 
-    ~NetMgrEsp8266WiFi() {
+    ~NetMgrSeeedRpcWiFi() {
         this->off();
+        WiFi.removeEvent(_staDisconnectEvent);
     }
 
     void begin() {
         WiFi.persistent(false);
         WiFi.setAutoReconnect(false);
+
+        _staDisconnectEvent = WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info) {
+            const int reason = info.disconnected.reason;
+            switch (reason) {
+            case WIFI_REASON_AUTH_EXPIRE:
+            case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+            case WIFI_REASON_AUTH_FAIL:
+            case WIFI_REASON_HANDSHAKE_TIMEOUT:
+            case WIFI_REASON_MIC_FAILURE:
+                LOG_D("Auth failed (%d)", reason);
+                _error = NETMGR_ERR_AUTH_FAILED;
+                break;
+            case WIFI_REASON_NO_AP_FOUND:
+                LOG_D("Network not found");
+                _error = NETMGR_ERR_NETWORK_NOT_FOUND;
+                break;
+            default:
+                LOG_D("Disconnected (%d)", reason);
+                _error = NETMGR_ERR_UNKNOWN;
+            }
+            if (_state == NETMGR_CONNECTED) {
+                resetScanInterval();
+                setState(NETMGR_START_SCANNING);
+            }
+        }, WiFiEvent_t::SYSTEM_EVENT_STA_DISCONNECTED);
+
         WiFi.setHostname(_hostname.c_str());
 
         resetScanInterval();
@@ -224,7 +251,7 @@ public:
     }
 
     bool supportsScan() { return true; }
-    bool supports5GHz() { return false; }
+    bool supports5GHz() { return true; }
     bool supportsStaticIP() { return true; }
 
     bool isConnected() {
@@ -300,11 +327,14 @@ public:
         struct {
           uint8_t   sec;
           uint8_t*  bssid;
-          bool      hidden;
+          int32_t   rssi;
+          int32_t   chan;
         } res;
         WiFi.getNetworkInfo(i, ssid, res.sec,
-                            rssi, res.bssid,
-                            chan, res.hidden);
+                            res.rssi, res.bssid,
+                            res.chan);
+        rssi = res.rssi;
+        chan = res.chan;
         sec = wifiSecToStr(res.sec);
         bssid = macToString(res.bssid);
         return true;
@@ -467,8 +497,8 @@ public:
                 return;
             }
             _lastScanTime = millis();
-            //                          async|hidden
-            int res = WiFi.scanNetworks(true, false);
+            //                          async|hidden|passive
+            int res = WiFi.scanNetworks(true, false, false);
             if (res == WIFI_SCAN_RUNNING || res >= 0) {
                 setState(NETMGR_SCANNING);
             } else {
@@ -539,22 +569,13 @@ public:
             } else {
                 WiFi.config(IPAddress(), IPAddress(), IPAddress()); // ensure DHCP
             }
-            if (WiFi.begin(_foundBest->ssid.c_str(),
-                           _foundBest->psk.c_str(),
-                           _foundBest->channel,
-                           macIsValid(_foundBest->bssid) ? _foundBest->bssid : NULL))
-            {
-                setState(NETMGR_CONNECTING);
-            } else {
-                LOG_W("Cannot start connection");
-                WiFi.disconnect(true);
-                setState(NETMGR_START_SCANNING);
-            }
+            connectWiFi();
+            setState(NETMGR_CONNECTING);
         } break;
         case NETMGR_CONNECTING: {
-            if (millis() - _lastCheckTime > 10) {
+            if (millis() - _lastCheckTime > 100) {
                 _lastCheckTime = millis();
-                const int status = WiFi.status();
+                const int status = connectWiFi();
                 const bool timeout = (millis() - _lastStateTime > NETMGR_WIFI_CONN_TIMEOUT_MS);
                 if (status == WL_CONNECTED) {
                     LOG_I("WiFi connected "
@@ -575,6 +596,7 @@ public:
                             if (!ap.hasBSSID() && ap.id == _foundBest->id) {
                                 memcpy(ap.bssid, _foundBest->bssid, sizeof(ap.bssid));
                                 ap.channel = _foundBest->channel;
+                                ap.security = _foundBest->security;
 
                                 // Save the updated info
                                 saveNetwork(prefs, ap);
@@ -590,7 +612,6 @@ public:
                         }
                     }
 
-                    getNtpTime();
                     setState(NETMGR_CONNECTED);
                 } else if (status == WL_NO_SSID_AVAIL) {
                     LOG_E("Connecting failed: AP not found");
@@ -633,15 +654,23 @@ public:
     static
     const char* wifiSecToStr(int sec) {
       switch (sec) {
-        case ENC_TYPE_NONE:            return "OPEN";
-        case ENC_TYPE_WEP:             return "WEP";
-        case ENC_TYPE_TKIP:            return "WPA";
-        case ENC_TYPE_CCMP:            return "WPA2";
-        case ENC_TYPE_AUTO:            return "WPA+WPA2";
-        default:                       return "unknown";
+        case WIFI_AUTH_OPEN:            return "OPEN";
+        case WIFI_AUTH_WEP:             return "WEP";
+        case WIFI_AUTH_WPA_PSK:         return "WPA";
+        case WIFI_AUTH_WPA2_PSK:        return "WPA2";
+        case WIFI_AUTH_WPA_WPA2_PSK:    return "WPA+WPA2";
+        case WIFI_AUTH_WPA2_ENTERPRISE: return "WPA2-EAP";
+        default:                        return "unknown";
       }
     }
 private:
+
+    wl_status_t connectWiFi() {
+        return WiFi.begin(_foundBest->ssid.c_str(),
+                          _foundBest->psk.c_str(),
+                          _foundBest->channel,
+                          macIsValid(_foundBest->bssid) ? _foundBest->bssid : NULL);
+    }
 
     void setState(State s) {
         if (_state != s) {
@@ -674,22 +703,22 @@ private:
             uint8_t sec_scan;
             uint8_t* bssid_scan;
             int32_t chan_scan;
-            bool hid_scan;
 
-            WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, bssid_scan, chan_scan, hid_scan);
+            WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, bssid_scan, chan_scan);
 
             bool known = false;
             for (auto it = _apList.rbegin(); it != _apList.rend(); ++it) {
                 ApEntry& entry = *it;
 
                 if ((ssid_scan == entry.ssid) &&
-                    ((sec_scan == ENC_TYPE_NONE && !entry.psk.length()) ||
-                     (sec_scan != ENC_TYPE_NONE && entry.psk.length()))
+                    ((sec_scan == WIFI_AUTH_OPEN && !entry.psk.length()) ||
+                     (sec_scan != WIFI_AUTH_OPEN && entry.psk.length()))
                 ) {
                     ApEntry foundAP = entry; // make a copy
 
                     memcpy(foundAP.bssid, bssid_scan, sizeof(foundAP.bssid));
                     foundAP.channel = chan_scan;
+                    foundAP.security = static_cast<wifi_auth_mode_t>(sec_scan);
                     foundAP.rssi = rssi_scan;
 
                     _foundList.push_back(foundAP);
@@ -703,31 +732,10 @@ private:
 
             LOG_D(" %s  %d: [%d][%s] %s (%d) %c", known?">":" ", i, chan_scan,
                   macToString(bssid_scan).c_str(), ssid_scan.c_str(),
-                  rssi_scan, (sec_scan == ENC_TYPE_NONE) ? ' ' : '*'
+                  rssi_scan, (sec_scan == WIFI_AUTH_OPEN) ? ' ' : '*'
                   );
         }
         WiFi.scanDelete();
-    }
-
-    void getNtpTime() {
-        const uint32_t tstart = millis();
-        time_t now = time(nullptr);
-        if (now < 1672531200) { // Jan 01, 2023
-            configTime(0, 0, "pool.ntp.org", "time.nist.gov");
-
-            while ((now < 1672531200) &&
-                   (millis() - tstart < 3000))
-            {
-                delay(10);
-                now = time(nullptr);
-            }
-
-            struct tm timeinfo;
-            gmtime_r(&now, &timeinfo);
-            String ntpTime = asctime(&timeinfo);
-            ntpTime.trim();
-            LOG_I("Time: %s", ntpTime.c_str());
-        }
     }
 
     bool loadNetwork(Preferences& prefs, int id) {
@@ -826,7 +834,8 @@ private:
     ApList            _apList;
     ApList            _foundList;
     ApEntry*          _foundBest = NULL;
+    WiFiEventId_t     _staDisconnectEvent;
     String            _hostname;
 };
 
-#endif /* NetMgrEsp8266WiFi_h */
+#endif /* NetMgrSeeedRpcWiFi_h */

@@ -14,11 +14,7 @@
 
 #if defined(CONFIG_USE_SSL)
 
-#if defined(ESP32)
-  #include <WiFiClientSecure.h>
-#elif defined(ESP8266)
-  #include <WiFiClientSecure.h>
-#endif
+#include <WiFiClientSecure.h>
 
 /*
  * 4096 bit, ISRG Root X1,            expires: Mon, 04 Jun 2035 11:04:38 GMT
@@ -135,6 +131,21 @@ MrY=
     _blynkWiFiClientSSL.setTimeout(3000);
     _blynkWiFiClientSSL.setBufferSizes(2048, 512);
     _blynkWiFiClientSSL.setTrustAnchors(&_blynkCert);
+    #endif
+  }
+#elif defined(NetMgr_WiFi) && defined(SEEED_WIO_TERMINAL)
+  #define BlynkHasWiFiClient
+  WiFiClient       _blynkWiFiClient;
+  #if defined(CONFIG_USE_SSL)
+  #define BlynkHasWiFiClientSSL
+  WiFiClientSecure _blynkWiFiClientSSL;
+  #endif
+  void setupClientWiFi() {
+    _blynkWiFiClient.setTimeout(6);
+    #if defined(CONFIG_USE_SSL)
+    _blynkWiFiClientSSL.setTimeout(6);
+    _blynkWiFiClientSSL.setCACert(ROOT_CA_CERT);
+    //_blynkWiFiClientSSL.setHandshakeTimeout(10); -> crashes on Wio Terminal
     #endif
   }
 #endif
@@ -279,4 +290,3 @@ BlynkClass<BlynkTransport>  Blynk(_blynkTransport);
 #include <BlynkWidgets.h>
 
 #endif // BlynkNetMgrClients_h
-

@@ -26,6 +26,7 @@ extern "C" {
 #else
     #define NETMGR_WIFI_SCAN_TIMEOUT_MS 15000
 #endif
+#define NETMGR_WIFI_CONN_TIMEOUT_MS 25000
 
 class NetMgrEsp32WiFi
 {
@@ -420,7 +421,7 @@ public:
                     const IPAddress& Mask,
                     const IPAddress& DNS1,
                     const IPAddress& DNS2)
-    {    
+    {
         if (!ssid.length() || ssid.length() > 31) {
             LOG_E("No ssid or ssid too long");
             return false;
@@ -459,8 +460,8 @@ public:
                     return true;
                 }
                 return false;
-          }
-       }
+            }
+        }
 
         // Create new entry (possibly overwriting the oldest one)
         ApEntry newAP(_nextId);
@@ -593,7 +594,7 @@ public:
                     _foundBest->gateway.toString().c_str(),
                     _foundBest->dns1.toString().c_str(),
                     _foundBest->dns2.toString().c_str());
-            }            
+            }
             _error = NETMGR_ERR_NONE;
             WiFi.disconnect();
 
@@ -620,7 +621,7 @@ public:
             if (millis() - _lastCheckTime > 10) {
                 _lastCheckTime = millis();
                 const int status = WiFi.status();
-                const bool timeout = (millis() - _lastStateTime > 25000);
+                const bool timeout = (millis() - _lastStateTime > NETMGR_WIFI_CONN_TIMEOUT_MS);
                 if (status == WL_CONNECTED) {
                     LOG_I("WiFi connected "
                         "(BSSID: %s, IP: %s, MASK: %s, GW: %s, DNS1: %s, DNS2: %s, RSSI: %d)",
