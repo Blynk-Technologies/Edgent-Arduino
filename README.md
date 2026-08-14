@@ -1,7 +1,7 @@
 # Blynk.Edgent for Arduino IDE
 
-**Blynk.Edgent** is a library for tinkerers that makes it easy to connect their devices to the Blynk IoT platform
-and take advantage of its advanced features without extensive coding.
+**Blynk.Edgent** is makes it easy to connect your devices to the Blynk IoT platform
+and take advantage of the advanced Blynk features without extensive coding.
 
 ![image](https://github.com/blynkkk/blynkkk.github.io/raw/master/images/GithubBanner.jpg?raw=1)
 
