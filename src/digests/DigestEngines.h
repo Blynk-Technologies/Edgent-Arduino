@@ -12,13 +12,18 @@
 #include <string.h>
 
 #if defined(ESP32)
-  #include <mbedtls/version.h>
-  #include <mbedtls/sha256.h>
-  #include <mbedtls/md5.h>
+  #include <mbedtls/md.h>
   #include <digests/DigestEnginesMbedTLS.h>
 #elif defined(ESP8266)
   #include <bearssl/bearssl_hash.h>
   #include <digests/DigestEnginesBearSSL.h>
+#elif __has_include(<nimble/ext/tinycrypt/include/tinycrypt/sha256.h>)
+  #include <nimble/ext/tinycrypt/include/tinycrypt/sha256.h>
+  #include <digests/DigestEnginesTinyCrypt.h>
+#elif __has_include(<Crypto.h>) && __has_include(<SHA256.h>)
+  //#include <SHA1.h> // CryptoLegacy
+  #include <SHA256.h>
+  #include <digests/DigestEnginesArduinoCrypto.h>
 #else
   #include <digests/DigestEnginesGeneric.h>
 #endif

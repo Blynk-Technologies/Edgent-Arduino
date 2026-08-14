@@ -55,7 +55,7 @@
   #define BOARD_BUTTON_PIN            28
   #define BOARD_BUTTON_ACTIVE_LOW     true
 
-  #define BOARD_LED_PIN_WS2812        27
+  #define BOARD_LED_PIN_RGB           27
   #define BOARD_LED_BRIGHTNESS        64
 
 #elif defined(ARDUINO_TTGO_TETH_POE)
@@ -95,7 +95,7 @@
   #define BOARD_BUTTON_PIN            9
   #define BOARD_BUTTON_ACTIVE_LOW     true
 
-  #define BOARD_LED_PIN_WS2812        8
+  #define BOARD_LED_PIN_RGB           8
   #define BOARD_LED_INVERSE           false
   #define BOARD_LED_BRIGHTNESS        32
 
@@ -164,7 +164,8 @@
   //#define BOARD_LED_PIN_R           15                    // Set R,G,B pins - if your LED is PWM RGB
   //#define BOARD_LED_PIN_G           12
   //#define BOARD_LED_PIN_B           13
-  //#define BOARD_LED_PIN_WS2812      4                     // Set if your LED is WS2812 RGB
+  //#define BOARD_LED_PIN_RGB         4                     // Set if your LED is an addressable RGB
+  //#define BOARD_LED_TYPE            NEO_GRB + NEO_KHZ800  // Set if your LED is an addressable RGB
   #define BOARD_LED_INVERSE           false                 // true if LED is common anode, false if common cathode
   #define BOARD_LED_BRIGHTNESS        64                    // 0..255 brightness control
 
@@ -184,5 +185,9 @@
 #endif
 
 #if !defined(BOARD_LED_INVERSE)
-#define BOARD_LED_INVERSE              0
+#define BOARD_LED_INVERSE              false
+#endif
+
+#if !defined(BOARD_LED_TYPE)
+#define BOARD_LED_TYPE                 NEO_GRB + NEO_KHZ800
 #endif

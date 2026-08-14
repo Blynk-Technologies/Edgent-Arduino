@@ -8,13 +8,13 @@ and take advantage of the advanced Blynk features without extensive coding.
 ## Features
 
 - **Blynk.Inject**: connect your devices easily using [**Blynk IoT App**][blynk-apps] (iOS and Android)
-  - `BLE`-assisted device provisioning for the best end-user experience
-  - `WiFiAP`-based provisioning for devices without BLE support
+  - `BLE-assisted` device provisioning for the best end-user experience
+  - `WiFiAP-based` provisioning for devices without BLE support
 - **Network Manager**: Advanced network connection management and troubleshooting
-  - `WiFi`: Maintains connection to the most reliable WiFi network (up to 16 configured networks)
+  - `WiFi` - maintains connection to the most reliable WiFi network (up to 16 configured networks)
   <!--
-  - `Ethernet`: Supports `Static IP` or `DHCP` network configuration
-  - `Cellular`: Provides connectivity through `2G GSM`, `EDGE`, `3G`, `4G LTE`, `Cat M1`, or `5G` networks using `PPP`
+  - `Ethernet` - supports `Static IP` or `DHCP` network configuration
+  - `Cellular` - provides connectivity through `2G GSM`, `EDGE`, `3G`, `4G LTE`, `Cat M1`, or `5G` networks using `PPP`
   -->
 - Secure **Blynk.Cloud** connection that provides simple API for:
   - Data transfer with `Virtual Pins`, reporting `Events`, and accessing `Metadata`

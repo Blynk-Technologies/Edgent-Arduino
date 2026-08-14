@@ -3,12 +3,14 @@
  *    Tools -> Board -> Select your board
  *    Tools -> Port  -> Select your port
  *
- *    For ESP32:
+ *    [ESP32]
  *      Tools -> Partition Scheme -> "RainMaker 4MB" (or 8MB)
  *    It is highly recommended to create a custom partition scheme
  *    optimized for your project.
+ *    For boards with native USB, select:
+ *      Tools -> USB CDC On Boot -> Enabled
  *
- *    For ESP8266:
+ *    [ESP8266]
  *      Tools -> Flash Size -> At least 128 KB FS
  *
  * 2. In BoardConfig.h, configure the LED and button pins.
