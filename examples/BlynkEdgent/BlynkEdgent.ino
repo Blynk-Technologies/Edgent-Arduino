@@ -21,7 +21,7 @@
  * 4. Install the required libraries:
  *    http://librarymanager#Blynk                v1.3.5
  *    http://librarymanager#Adafruit%20NeoPixel  v1.15.5
- *    http://librarymanager#Preferences          v2.3.0
+ *    http://librarymanager#Preferences          v2.4.0
  *    http://librarymanager#OneButton            v2.6.2
  *    http://librarymanager#ArduinoJson          v7.4.3
  *    http://librarymanager#ArduinoHttpClient    v0.6.1
