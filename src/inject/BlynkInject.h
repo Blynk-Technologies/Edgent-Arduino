@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Blynk Technologies Inc.
+ * Copyright (c) 2026 Blynk Technologies Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  */

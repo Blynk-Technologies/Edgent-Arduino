@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2026 Blynk Technologies Inc.
+ *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Addressable RGB LED driver (NeoPixel / WS2812 / SK6812).

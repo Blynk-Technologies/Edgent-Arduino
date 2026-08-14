@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2026 Blynk Technologies Inc.
+ *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Single-color LED driver using PWM.

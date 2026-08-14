@@ -1,6 +1,8 @@
 /**
  * @author     Volodymyr Shymanskyy
  * @copyright  Copyright (c) 2026 Volodymyr Shymanskyy
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef NetMgrEsp8266WiFi_h

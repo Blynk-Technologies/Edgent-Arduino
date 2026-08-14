@@ -1,6 +1,8 @@
 /**
  * @author     Volodymyr Shymanskyy
- * @copyright  Copyright (c) 2023 Volodymyr Shymanskyy
+ * @copyright  Copyright (c) 2026 Volodymyr Shymanskyy
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "NetMgr.h"

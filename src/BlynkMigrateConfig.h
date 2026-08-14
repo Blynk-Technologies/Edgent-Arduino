@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Blynk Technologies Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <stdint.h>
 #include <string.h>
 #include <Preferences.h>
@@ -110,7 +116,7 @@ bool migrateOldConfig(ConfigStore& cfg)
     }
 #endif
 
-    LOG_I("Migrating old Cloud configuration: Host=%s, Token=%s", configStore.cloudHost, configStore.cloudToken);
+    LOG_I("Migrating old config: Host=%s, Token=%s", configStore.cloudHost, configStore.cloudToken);
     cfg.setBlynkAuth(configStore.cloudToken);
     cfg.setBlynkHost(configStore.cloudHost);
     cfg.commit();
@@ -125,6 +131,6 @@ bool migrateOldConfig(ConfigStore& cfg)
         prefs.remove("dev_uid");
         prefs.end();
     }
-    LOG_W("Migrating old configuration is complete");
+    LOG_W("Migrating config is complete");
     return true;
 }
