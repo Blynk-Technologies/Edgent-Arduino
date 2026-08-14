@@ -1,7 +1,7 @@
 # Blynk.Edgent for Arduino IDE
 
-**Blynk.Edgent** is a packaged library for tinkerers to easily connect their devices to the Blynk IoT platform
-and take advantage of its advanced features without the need for extensive coding.
+**Blynk.Edgent** is a library for tinkerers that makes it easy to connect their devices to the Blynk IoT platform
+and take advantage of its advanced features without extensive coding.
 
 ![image](https://github.com/blynkkk/blynkkk.github.io/raw/master/images/GithubBanner.jpg?raw=1)
 
@@ -17,7 +17,7 @@ and take advantage of its advanced features without the need for extensive codin
   - `Cellular`: Provides connectivity through `2G GSM`, `EDGE`, `3G`, `4G LTE`, `Cat M1`, or `5G` networks using `PPP`
   -->
 - Secure **Blynk.Cloud** connection that provides simple API for:
-  - Data transfer with `DataStreams`, reporting `Events`, and accessing `Metadata`
+  - Data transfer with `Virtual Pins`, reporting `Events`, and accessing `Metadata`
 - **Blynk.Air** - automatic, managed Over The Air firmware updates using Web Dashboard
   - Direct firmware upgrade using iOS/Android App before device activation
 

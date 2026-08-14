@@ -20,12 +20,12 @@
  *
  * 4. Install the required libraries:
  *    http://librarymanager#Blynk                v1.3.5
- *    http://librarymanager#Adafruit%20NeoPixel  v1.15.5
  *    http://librarymanager#Preferences          v2.4.0
- *    http://librarymanager#OneButton            v2.6.2
  *    http://librarymanager#ArduinoJson          v7.4.3
  *    http://librarymanager#ArduinoHttpClient    v0.6.1
  *    http://librarymanager#NimBLE-Arduino       v2.5.1
+ *    http://librarymanager#OneButton            v2.6.2
+ *    http://librarymanager#Adafruit%20NeoPixel  v1.15.5
  *
  * 5. Upload the sketch to your board and open the Serial Monitor at 115200 baud.
  *
