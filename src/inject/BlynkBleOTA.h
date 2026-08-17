@@ -7,11 +7,11 @@
 #ifndef BlynkBleOTA_h
 #define BlynkBleOTA_h
 
-#include <mutex>
-
 #include <ArduinoJson.h>
 #include <digests/DigestEngines.h>
 #include <updater/BlynkUpdater.h>
+#include <inject/BlynkBleLock.h>
+#include <Blynk/BlynkUtility.h>
 
 // For testing integrity checks, 1-100%
 //#define BLE_OTA_TEST_CLOBBER_CHUNKS 1
@@ -21,22 +21,6 @@
 
 #define BLE_OTA_BUFFER_SIZE 4096
 
-/*
- * Bare-metal toolchains (i.e. arm-none-eabi, used for SAMD) ship a libstdc++
- * built without threading support, so std::mutex is not available there.
- * On such platforms we fall back to a no-op lock: the transfer is lock-step
- * (the peer waits for ota_block_ok before sending the next block),
- * so the pending buffer is not accessed concurrently.
- */
-#if defined(_GLIBCXX_HAS_GTHREADS) || defined(_LIBCPP_VERSION)
-typedef std::mutex BlynkBleOtaLock;
-#else
-class BlynkBleOtaLock {
-public:
-    void lock()   {}
-    void unlock() {}
-};
-#endif
 
 /*
  * The firmware arrives in blocks of up to BLE_OTA_BUFFER_SIZE bytes,
@@ -57,7 +41,7 @@ public:
         String t = json["t"];
 
         if (t == "ota_get_info") {
-            const int chunk = _ble.getMTU()-3;
+            const unsigned chunk = BlynkMax((int)_ble.getMTU(), 23) - 3;
             char buff[256];
             JsonDocument doc;
             doc["t"] = "ota_info";
@@ -90,7 +74,7 @@ public:
                     error_msg = "file size not matching";
                 } else {
                     LOG_I("Resuming update");
-                    std::lock_guard<BlynkBleOtaLock> lock(_mutex);
+                    std::lock_guard<BlynkBleLock> lock(_mutex);
                     resetPending();
                 }
             } else {
@@ -125,7 +109,7 @@ public:
 
             exp_crc.toLowerCase();
 
-            std::unique_lock<BlynkBleOtaLock> lock(_mutex);
+            std::unique_lock<BlynkBleLock> lock(_mutex);
 
             String act_crc  = getDigestHex(_pending_crc);
 
@@ -227,7 +211,7 @@ public:
     }
 
     void processRawPacket(const uint8_t* data, size_t len) {
-        std::lock_guard<BlynkBleOtaLock> lock(_mutex);
+        std::lock_guard<BlynkBleLock> lock(_mutex);
 #ifdef BLE_OTA_USE_CHUNK_HEADER
         unsigned chunk_id = data[0];
         data++; len--;
@@ -279,7 +263,7 @@ private:
     }
 
     void abortUpdate() {
-        std::lock_guard<BlynkBleOtaLock> lock(_mutex);
+        std::lock_guard<BlynkBleLock> lock(_mutex);
         abortUpdateLocked();
     }
 
@@ -289,7 +273,7 @@ private:
     String                        _expected_sha;
     unsigned                      _total_size = 0;
 
-    BlynkBleOtaLock               _mutex;
+    BlynkBleLock                  _mutex;
     uint8_t                       _pending_bytes[BLE_OTA_BUFFER_SIZE];
     unsigned                      _pending_size = 0;
     DigestEngineCRC32             _pending_crc;

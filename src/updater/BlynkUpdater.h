@@ -121,6 +121,12 @@ private:
   #include <updater/BlynkUpdaterArduino.h>
 #endif
 
-static BlynkUpdater ArduinoUpdate;
+inline BlynkUpdater& getBlynkUpdater() {
+    // A single updater instance, shared by all translation units.
+    static BlynkUpdater instance;
+    return instance;
+}
+
+#define ArduinoUpdate  (getBlynkUpdater())
 
 #endif

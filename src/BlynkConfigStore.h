@@ -72,10 +72,10 @@ struct ConfigStore {
   void commit() {
     Preferences prefs;
     if (prefs.begin(BLYNK_PREFS_NAMESPACE)) {
-      if (!prefs.putString("auth",  _auth)) {
+      if (!prefs.putString("host",  _host)) {
         return;
       }
-      if (!prefs.putString("host",  _host)) {
+      if (!prefs.putString("auth",  _auth)) {
         return;
       }
       _saved = true;
@@ -117,9 +117,8 @@ private:
   }
 
 private:
-  bool          _saved;
-
-  int           _cfgskip;
+  bool          _saved   = false;
+  int           _cfgskip = 0;
   String        _fwver;
   String        _auth;
   String        _host;

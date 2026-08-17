@@ -115,7 +115,7 @@ public:
     btn.setLongPressIntervalMs(1000);
 
     btn.attachLongPressStart([]() {
-      BLYNK_PRINT.println("Button: Long Press!");
+      BLYNK_LOG("Button: Long Press!");
     });
     btn.attachDuringLongPress([]() {
       uint32_t passed = _instance->btn.getPressedMs();
@@ -123,7 +123,7 @@ public:
         if (_instance->_willReset) {
           _instance->_willReset = false;
           _instance->updateIndicator();
-          BLYNK_PRINT.println("Config reset canceled");
+          BLYNK_LOG("Config reset canceled");
         }
       } else if (passed > BUTTON_HOLD_TIME_CONFIG_RESET) {
         if (!_instance->_willReset) {
@@ -131,7 +131,7 @@ public:
 #if defined(BOARD_LED_CLASS)
           _instance->led.setMode(BlynkIndicator::BLINK_WHITE_FAST);
 #endif
-          BLYNK_PRINT.println("Release the button to reset config!");
+          BLYNK_LOG("Release the button to reset config!");
         }
       } else if (passed > BUTTON_HOLD_TIME_INDICATION) {
 #if defined(BOARD_LED_CLASS)
@@ -144,20 +144,20 @@ public:
       if (passed > BUTTON_HOLD_TIME_CANCEL) {
         // Button was held for too long -> cancel
       } else if (passed > BUTTON_HOLD_TIME_CONFIG_RESET) {
-        BLYNK_PRINT.println("Resetting configuration");
+        BLYNK_LOG("Resetting configuration");
         BlynkEdgent.resetConfig();
       } else {
-        BLYNK_PRINT.printf("Button: Released (%lu ms)\n", (unsigned long)passed);
+        BLYNK_LOG("Button: Released (%lu ms)", (long unsigned)passed);
       }
       _instance->_willReset = false;
       _instance->updateIndicator();
     });
 
     btn.attachClick([](){
-      BLYNK_PRINT.println("Button: Click!");
+      BLYNK_LOG("Button: Click!");
     });
     btn.attachDoubleClick([](){
-      BLYNK_PRINT.println("Button: Double Click!");
+      BLYNK_LOG("Button: Double Click!");
     });
 #endif
   }

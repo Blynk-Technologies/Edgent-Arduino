@@ -46,7 +46,22 @@ protected:
     }
 
     void doAbort() override {
-        //TODO: Update.abort();
+        if (!Update.isRunning()) {
+            return;
+        }
+        /*
+         * The ESP8266 Updater has no abort(): end() on a fully received image
+         * would commit it. Setting a MD5 that cannot match makes the final
+         * check fail, so the image is dropped instead
+         */
+        Update.setMD5("00000000000000000000000000000000");
+        Update.end();
+        if (Update.isRunning()) {
+            // An MD5 error does not release the updater by itself
+            Update.end();
+        }
+        // Otherwise a new update cannot be started without a reboot
+        Update.clearError();
     }
 };
 

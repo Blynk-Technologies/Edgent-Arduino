@@ -5,7 +5,6 @@
  */
 
 #include <BlynkSysUtils.h>
-#include <Blynk/BlynkUtility.h>
 
 #if defined(ESP8266)
   #include <ESP8266WiFi.h>
@@ -37,6 +36,7 @@ BLYNK_NOINIT_ATTR
 SystemStats systemStats;
 
 static String sysDevPrefix = "Unknown", sysDevName = "Device";
+static String sysDevSuffix; // If empty, a unique suffix is derived from the chip ID
 
 void systemInit(String devPrefix, String devName)
 {
@@ -72,7 +72,7 @@ void systemInit(String devPrefix, String devName)
       // valid Wi-Fi credentials have been set on the Argon.
       // This is only necessary with Device OS 3.x and earlier.
       uint8_t val = 0;
-      if(!dct_read_app_data_copy(DCT_SETUP_DONE_OFFSET, &val, sizeof(val)) && val != 1)
+      if (!dct_read_app_data_copy(DCT_SETUP_DONE_OFFSET, &val, sizeof(val)) && val != 1)
       {
         val = 1;
         dct_write_app_data(&val, DCT_SETUP_DONE_OFFSET, sizeof(val));
@@ -123,6 +123,7 @@ String encodeUniquePart(uint32_t n, unsigned len)
 
   char buf[16] = { 0, };
   char prev = 0;
+  if (len > sizeof(buf)-1) { return String(); }
   for (unsigned i = 0; i < len; n /= base) {
     char c = alphabet[n % base];
     if (c == prev) {
@@ -134,7 +135,7 @@ String encodeUniquePart(uint32_t n, unsigned len)
 }
 
 static
-String getDeviceRandomSuffix(unsigned size)
+String getDeviceShortID(unsigned size)
 {
   static uint32_t unique = 0;
   static bool hasUnique = false;
@@ -178,27 +179,55 @@ String getDeviceRandomSuffix(unsigned size)
   return encodeUniquePart(unique, size);
 }
 
-String systemGetDeviceName(bool withPrefix/* = true*/)
+void systemSetNameSuffix(String suffix)
 {
-  String devUnique = getDeviceRandomSuffix(4);
-  const int maxTmplName = 29 - (2 + sysDevPrefix.length() + devUnique.length());
-  String devName = sysDevName.substring(0, maxTmplName);
-  if (withPrefix)
-  {
-    // Use short name if devPrefix and devName are the same
-    if (sysDevPrefix == devName)
-    {
-      return sysDevPrefix + "-" + devUnique;
-    }
-    else
-    {
-      return sysDevPrefix + " " + devName + "-" + devUnique;
+  sysDevSuffix = suffix;
+}
+
+String systemGetTemplateName()
+{
+  return sysDevName;
+}
+
+String systemGetFullName(bool withPrefix/* = true*/)
+{
+  /*
+   * The name is composed as "<prefix> <name>-<unique>",
+   * and is limited to BLYNK_MAX_DEVICE_NAME_LEN bytes.
+   * When the parts don't fit, the vendor prefix has the highest priority,
+   * then goes the unique suffix, and finally the device name.
+   */
+  const String devUnique = sysDevSuffix.length() ? sysDevSuffix : getDeviceShortID(4);
+
+  String result;
+  int budget = BLYNK_MAX_DEVICE_NAME_LEN;
+
+  if (withPrefix) {
+    result = sysDevPrefix.substring(0, budget);
+    budget -= result.length();
+  }
+
+  // Reserve the space for the unique suffix (including the "-" separator)
+  const int uniqueLen = BlynkMin((int)devUnique.length(), BlynkMax(budget - 1, 0));
+  if (uniqueLen) { budget -= uniqueLen + 1; }
+
+  // Whatever is left can be used for the device name.
+  // Skip it if it's the same as the prefix
+  if (!withPrefix || sysDevPrefix != sysDevName) {
+    const int separator = result.length() ? 1 : 0;
+    const int nameLen = BlynkMin((int)sysDevName.length(), BlynkMax(budget - separator, 0));
+    if (nameLen > 0) {
+      if (separator) { result += ' '; }
+      result += sysDevName.substring(0, nameLen);
     }
   }
-  else
-  {
-    return devName + "-" + devUnique;
+
+  if (uniqueLen > 0) {
+    if (result.length()) { result += '-'; }
+    result += devUnique.substring(0, uniqueLen);
   }
+
+  return result;
 }
 
 uint64_t systemUptime()

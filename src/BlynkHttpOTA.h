@@ -11,7 +11,7 @@ static
 bool parseURL(String url, String& protocol, String& host, int& port, String& path)
 {
   int index = url.indexOf(':');
-  if(index < 0) {
+  if (index < 0) {
     return false;
   }
 
@@ -23,7 +23,7 @@ bool parseURL(String url, String& protocol, String& host, int& port, String& pat
   url.remove(0, index);       // remove server part
 
   index = server.indexOf(':');
-  if(index >= 0) {
+  if (index >= 0) {
     host = server.substring(0, index);          // hostname
     port = server.substring(index + 1).toInt(); // port
   } else {
@@ -174,9 +174,7 @@ bool downloadUpgrade(const String& url)
 }
 
 bool uploadCoreDump(const String& server, const String& token, size_t dumpSize) {
-#if defined(ESP8266)
-  return false;
-#elif defined(ESP32)
+#if defined(ESP32)
   WiFiClientSecure net;
   net.setCACert(ROOT_CA_CERT);
 
@@ -228,5 +226,10 @@ bool uploadCoreDump(const String& server, const String& token, size_t dumpSize) 
   http.stop();
 
   return status >= 200 && status < 300;
+#else
+  (void)server;
+  (void)token;
+  (void)dumpSize;
+  return false;
 #endif
 }

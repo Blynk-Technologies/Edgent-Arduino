@@ -1,11 +1,14 @@
 /*
- * Copyright (c) 2026 Blynk Technologies Inc.
+ * Copyright (c) 2024 Blynk Technologies Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <rpcBLEDevice.h>
+#include <Arduino.h>
+
+#include <BLEDevice.h>
 #include <BLEServer.h>
+#include <BLEUtils.h>
 #include <BLE2902.h>
 #include <queue>
 
@@ -28,18 +31,11 @@ public:
         : _connected(false)
     {}
 
-    // NOTE: short_name is ignored here: this stack puts the Complete Local Name
-    //       into the advertisement packet, and the service UUID into the scan response
-    void begin(const char* name, const char* short_name = nullptr) {
+    void begin(const char* name) {
         // Create the BLE Device
         BLEDevice::init(name);
 
-        // The GATT server survives end(), so it is only set up once.
-        // Advertising is (re)started below on every begin()
-        if (_server) {
-            _server->getAdvertising()->start();
-            return;
-        }
+        if (_server) return;
 
         // Create the BLE Server
         _server = BLEDevice::createServer();
@@ -51,9 +47,8 @@ public:
         // Create a BLE Characteristic
         _tx_char = _service->createCharacteristic(
                             CHARACTERISTIC_UUID_TX,
-                            BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+                            BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_INDICATE);
 
-        _tx_char->setAccessPermissions(GATT_PERM_READ);
         _tx_char->addDescriptor(new BLE2902());
 
         _rx_char = _service->createCharacteristic(
@@ -63,9 +58,6 @@ public:
         _raw_char = _service->createCharacteristic(
                             CHARACTERISTIC_UUID_RAW,
                             BLECharacteristic::PROPERTY_WRITE_NR | BLECharacteristic::PROPERTY_WRITE);
-
-        _rx_char->setAccessPermissions(GATT_PERM_READ | GATT_PERM_WRITE);
-        _raw_char->setAccessPermissions(GATT_PERM_READ | GATT_PERM_WRITE);
 
         _rx_char->setCallbacks(this);
         _raw_char->setCallbacks(this);
@@ -80,20 +72,17 @@ public:
     }
 
     void end() {
-        if (_server) {
-            _server->getAdvertising()->stop();
-        }
+        _server->getAdvertising()->stop();
     }
 
     size_t write(const void* buf, size_t len) {
-        if (!_connected || !_tx_char) {
-            return 0;
-        }
         _tx_char->setValue((uint8_t*)buf, len);
-        // NOTE: notify() works on Wio Terminal, indicate() does NOT!
-        _tx_char->notify();
-        delay(10);
-        LOG_D("<< %s", buf);
+        _tx_char->indicate();
+
+        //Serial.write("<< ");
+        //Serial.write((uint8_t*)buf, len);
+        //Serial.println();
+
         return len;
     }
 
@@ -105,9 +94,9 @@ public:
       String result;
       {
         char* msg = _rx_queue.front();
-        _rx_queue.pop();
         result = msg;
         free(msg);
+        _rx_queue.pop();
       }
       return result;
     }
@@ -121,42 +110,38 @@ public:
     }
 
     unsigned getMTU() {
-        unsigned res = BLEDevice::getMTU(); // TODO: always returns 23?
-        LOG_I("BLE MTU: %d", res);
-        return 250; // This works :)
+        return BLEDevice::getMTU(); // TODO: always returns 23?
     }
 
 private:
 
-    void onConnect(BLEServer* server) override {
-        LOG_I("BLE connected");
+    void onConnect(BLEServer* server, esp_ble_gatts_cb_param_t *param) override {
+        //Serial.println("BLE connected");
         _connected = true;
-        //server->updateConnParams(server->getconnId(), 6, 12, 0, 200);
+        server->updateConnParams(param->connect.remote_bda, 6, 12, 0, 200);
     }
     void onDisconnect(BLEServer* server) override {
-        LOG_I("BLE disconnected");
+        //Serial.println("BLE disconnected");
         _server->getAdvertising()->start();
         _connected = false;
     }
 
     void onWrite(BLECharacteristic *pChar) override {
-      std::string value = pChar->getValue();
-      const uint8_t* data = (const uint8_t*)value.data();
-      uint16_t len  = value.length();
+      const uint8_t* data = (const uint8_t*)pChar->getValue().data();
+      uint16_t len  = pChar->getLength();
 
       if (!data || !len) {
         return;
       }
 
       if (pChar == _rx_char) {
+        //Serial.write(">> ");
+        //Serial.write(data, len);
+        //Serial.println();
+
         char* msg = (char*)malloc(len+1);
-        if (!msg) {
-          LOG_E("Out of memory");
-          return;
-        }
         memcpy(msg, data, len);
-        msg[len] = '\0';   // Null-terminate string
-        LOG_D(">> %s", msg);
+        msg[len] = 0;   // Null-terminate string
         {
           _rx_queue.push(msg);
         }

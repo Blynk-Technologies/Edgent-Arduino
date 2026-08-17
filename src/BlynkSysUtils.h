@@ -7,6 +7,7 @@
 #pragma once
 
 #include "EdgentSettings.h"
+#include <Blynk/BlynkUtility.h>
 
 #if defined(BLYNK_USE_LITTLEFS)
   #include <LittleFS.h>
@@ -32,10 +33,15 @@
   #define BLYNK_NOINIT_ATTR     __attribute__((section(".noinit")))
 #endif
 
+// Limited by the BLE advertising payload
+#define BLYNK_MAX_DEVICE_NAME_LEN   29
+
 String    timeSpanToStr(const uint64_t t);
 
 void      systemInit(String devPrefix, String devName);
-String    systemGetDeviceName(bool withPrefix = true);
+void      systemSetNameSuffix(String suffix); // Overrides the auto-generated unique part
+String    systemGetFullName(bool withPrefix = true);
+String    systemGetTemplateName();
 String    systemGetDeviceUID();
 uint64_t  systemUptime();
 void      systemReboot();
@@ -82,7 +88,7 @@ public:
     const uint64_t now = systemUptime();
     const uint32_t delta_secs = (now - _last_connected_change) / 1000;
     total_offline_time += delta_secs;
-    max_offline_time = max(max_offline_time, delta_secs);
+    max_offline_time = BlynkMax(max_offline_time, delta_secs);
     _last_connected_change = now;
   }
 
@@ -90,7 +96,7 @@ public:
     const uint64_t now = systemUptime();
     const uint32_t delta_secs = (now - _last_connected_change) / 1000;
     total_online_time += delta_secs;
-    max_online_time = max(max_online_time, delta_secs);
+    max_online_time = BlynkMax(max_online_time, delta_secs);
     _last_connected_change = now;
   }
 

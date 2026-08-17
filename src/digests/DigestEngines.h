@@ -129,7 +129,7 @@ String getDigestHex(const T& md) {
     uint8_t buffer[len];
     char    output[(len * 2) + 1];
     md.getDigestBuffer(buffer);
-    for(unsigned i = 0; i < len; i++) {
+    for (unsigned i = 0; i < len; i++) {
         sprintf(output + (i * 2), "%02x", buffer[i]);
     }
     return String(output);

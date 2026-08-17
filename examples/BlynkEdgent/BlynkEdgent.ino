@@ -63,13 +63,13 @@ void setup()
   BlynkEdgent.setConfigTimeout(10*60);
 
   // The amount of times the board enters the config mode automatically.
-  // NOTE: 0 means unlimited, and is only useful for testing. Default: 5
+  // NOTE: 0 means unlimited, and is only useful for testing. Default: 10
   BlynkEdgent.setConfigSkipLimit(0);
 
   // Edgent state indication and button interaction
   interaction.begin();
   BlynkEdgent.onStateChange([](){
-    Serial.printf("State: %s\n", BlynkEdgent.getStateName());
+    BLYNK_LOG("State: %s", BlynkEdgent.getStateName());
     interaction.updateIndicator();
   });
 

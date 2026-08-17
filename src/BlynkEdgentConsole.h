@@ -34,7 +34,7 @@ void Edgent::initConsoleCommands() {
   _console.addCommand("devinfo", [this]() {
     _console.printf(
         R"json({"name":"%s","board":"%s","tmpl_id":"%s","fw_type":"%s","fw_ver":"%s"})json" "\n",
-        systemGetDeviceName().c_str(),
+        systemGetFullName().c_str(),
         BLYNK_TEMPLATE_NAME,
         BLYNK_TEMPLATE_ID,
         BLYNK_FIRMWARE_TYPE,

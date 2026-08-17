@@ -133,6 +133,12 @@ void BlynkInject::begin(String name, String vendor, String tmpl_id, String fw_ty
     WiFi.softAP(_name.c_str());
     delay(50);
 #endif
+#ifdef NetMgr_Ethernet
+    NetMgrEthernet.startConfig();
+#endif
+#ifdef NetMgr_Cellular
+    NetMgrCellular.startConfig();
+#endif
 
     setupServer();
 
@@ -141,6 +147,7 @@ void BlynkInject::begin(String name, String vendor, String tmpl_id, String fw_ty
 
 void BlynkInject::end()
 {
+    dnsServer.stop();
     server.stop();
     WiFi.enableAP(false);
     _started = false;
@@ -175,17 +182,35 @@ void BlynkInject::run() {
 
 void BlynkInject::setupServer() {
 
+      /*
+       * NOTE: WebServer::stop() does not release the registered handlers,
+       *       so they are only installed once (they capture `this`,
+       *       which is a singleton anyway)
+       */
+      static bool handlersInstalled = false;
+      const bool installHandlers = !handlersInstalled;
+      handlersInstalled = true;
+
       // Set up DNS Server
       dnsServer.setTTL(300); // Time-to-live 300s
       dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure); // Return code for non-accessible domains
 #ifdef WIFI_CAPTIVE_PORTAL_ENABLE
       dnsServer.start(DNS_PORT, "*", WiFi.softAPIP()); // Point all to our IP
+#else
+      dnsServer.start(DNS_PORT, CONFIG_AP_URL, WiFi.softAPIP());
+      LOG_I("WiFi AP config page: %s", CONFIG_AP_URL);
+#endif
+
+      if (!installHandlers) {
+        server.begin();
+        return;
+      }
+
+#ifdef WIFI_CAPTIVE_PORTAL_ENABLE
       server.onNotFound([]() {
         server.send(200, "text/html", configForm);
       });
 #else
-      dnsServer.start(DNS_PORT, CONFIG_AP_URL, WiFi.softAPIP());
-      LOG_I("WiFi AP config page: %s", CONFIG_AP_URL);
       server.onNotFound([]() {
         server.send(404, "text/plain", "Not found");
       });
@@ -244,10 +269,14 @@ void BlynkInject::setupServer() {
         _config.dns  = server.arg("dns");
         _config.dns2 = server.arg("dns2");
 
-        _config.forceSave  = server.arg("save").toInt();
+        const String saveArg = server.arg("save");
+        _config.forceSave  = (saveArg == "1" || saveArg.equalsIgnoreCase("true"));
 
+        // TODO: per-interface validation on NetMgg side?
         if (_config.auth.length() == 32 &&
-            (_config.intf == "wifi" && _config.ssid.length())
+            ((_config.intf == "wifi" && _config.ssid.length()) ||
+             (_config.intf == "cell") ||
+             (_config.intf == "eth" ))
         ) {
             sendMsg(R"json({"status":"ok","msg":"Trying to connect..."})json");
 
@@ -283,6 +312,30 @@ void BlynkInject::setupServer() {
           obj["scan"  ] = NetMgrWiFi.supportsScan()?1:0;
           obj["5ghz"  ] = NetMgrWiFi.supports5GHz()?1:0;
           obj["static_ip"] = NetMgrWiFi.supportsStaticIP()?1:0;
+        }
+#endif
+#ifdef NetMgr_Cellular
+        if (NetMgrCellular.isHardwareAvailable()) {
+          JsonObject obj = ifs.add<JsonObject>();
+          obj["name"  ] = "cell";
+          obj["imei"  ] = NetMgrCellular.getIMEI();
+          obj["imsi"  ] = NetMgrCellular.getIMSI();
+          obj["iccid" ] = NetMgrCellular.getICCID();
+          obj["scan"  ] = NetMgrCellular.supportsScan()?1:0;
+          obj["pin"   ] = NetMgrCellular.supportsSimPin()?1:0;
+          obj["apn"   ] = NetMgrCellular.supportsAPN()?1:0;
+        }
+#endif
+#ifdef NetMgr_Ethernet
+        if (NetMgrEthernet.isHardwareAvailable()) {
+          JsonObject obj = ifs.add<JsonObject>();
+          obj["name"  ] = "eth";
+          obj["mac"   ] = NetMgrEthernet.getMacAddress();
+          obj["status"] = NetMgrEthernet.getStatus();
+          if (NetMgrEthernet.isConnected()) {
+            obj["ip"  ] = NetMgrEthernet.getLocalIP();
+          }
+          obj["static_ip"] = NetMgrEthernet.supportsStaticIP()?1:0;
         }
 #endif
         String json;

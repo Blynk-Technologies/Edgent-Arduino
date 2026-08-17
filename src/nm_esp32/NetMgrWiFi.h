@@ -404,7 +404,7 @@ public:
             if (s.length() && ip.fromString(s)) {
                 return ip;
             }
-            return INADDR_NONE;
+            return IPAddress();
         };
 
         IPAddress ip   = toIP(ipStr);
@@ -412,6 +412,12 @@ public:
         IPAddress mask = toIP(maskStr);
         IPAddress dns1 = toIP(dns1Str);
         IPAddress dns2 = toIP(dns2Str);
+
+        // Only the second DNS specified => use it as the primary one
+        if (!dns1 && dns2) {
+            dns1 = dns2;
+            dns2 = IPAddress();
+        }
 
         return addNetwork(ssid, psk, ip, gw, mask, dns1, dns2);
     }
@@ -509,11 +515,15 @@ public:
 
     void clearNetworks() {
         _nextId = 0;
+        _lruId = -1;
         _foundBest = NULL;
         _foundList.clear();
         _scanList.clear();
         _apList.clear();
         eraseNetworks();
+        // Stop the state machine: it may be pointing at a network
+        // that has just been removed
+        setState(NETMGR_IDLE);
     }
 
     void run() {
@@ -636,7 +646,7 @@ public:
                         WiFi.RSSI());
 
                     Preferences prefs;
-                    if (prefs.begin(NETMGR_WIFI_PREFS_NS)) {
+                    if (_foundBest && prefs.begin(NETMGR_WIFI_PREFS_NS)) {
                         // Check if AP info needs to be updated
                         for (auto it = _apList.begin(); it != _apList.end(); ++it) {
                             ApEntry& ap = *it;
@@ -673,7 +683,9 @@ public:
                         LOG_E("Connecting failed");
                     }
                     WiFi.disconnect(true);
-                    _foundBest->rssi = 0; // exclude from next connection
+                    if (_foundBest) {
+                        _foundBest->rssi = 0; // exclude from next connection
+                    }
                     if ((_foundBest = findBestNetwork())) {
                         setState(NETMGR_START_CONNECTING);
                     } else {
@@ -771,7 +783,10 @@ private:
             uint8_t* bssid_scan;
             int32_t chan_scan;
 
-            WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, bssid_scan, chan_scan);
+            bool res = WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, bssid_scan, chan_scan);
+            if (!res || !bssid_scan) {
+                continue;
+            }
 
             if (fullList) {
                 ApEntry scanEntry(0);
@@ -819,7 +834,7 @@ private:
         char key[8];
         snprintf(key, sizeof(key), "ap%02d", id);
         if (prefs.isKey(key)) {
-            uint8_t buf[128];
+            uint8_t buf[256];
             size_t len = prefs.getBytes(key, buf, sizeof(buf));
             ApEntry ap(id);
             if (len && ap.load(buf, len)) {

@@ -76,6 +76,10 @@ public:
     }
   }
 
+  void setDeviceNameSuffix(const String& name) {
+    systemSetNameSuffix(name);
+  }
+
   bool begin()
   {
     if (!String(BLYNK_TEMPLATE_ID).startsWith("TMPL")) {
@@ -85,7 +89,7 @@ public:
 
     systemInit(BLYNK_VENDOR_PREFIX, BLYNK_TEMPLATE_NAME);
 
-    NetMgr.setHostname(systemGetDeviceName());
+    NetMgr.setHostname(systemGetFullName());
     NetMgr.begin();
 
     setupNetMgrClients();
@@ -154,6 +158,12 @@ public:
 #ifdef NetMgr_WiFi
     if (net == "wifi") { return String("WiFi: ") + NetMgrWiFi.getNetworkSSID();  }
 #endif
+#ifdef NetMgr_Cellular
+    if (net == "cell") { return String("Cell: ") + NetMgrCellular.getOperator(); }
+#endif
+#ifdef NetMgr_Ethernet
+    if (net == "eth")  { return "Ethernet"; }
+#endif
     return "None";
   }
 
@@ -170,7 +180,7 @@ private:
       _inject._config.host = BLYNK_DEFAULT_SERVER;
 
       _inject.setProvisionCallback(provisionCb);
-      _inject.begin(systemGetDeviceName(),
+      _inject.begin(systemGetFullName(),
                     BLYNK_VENDOR_PREFIX,
                     BLYNK_TEMPLATE_ID,
                     BLYNK_FIRMWARE_TYPE,
@@ -241,6 +251,27 @@ private:
       }
     }
 #endif
+#ifdef NetMgr_Ethernet
+    if (_inject._config.intf == "eth") {
+      switch (NetMgrEthernet.getError()) {
+      case NetMgrEthernet.NETMGR_ERR_NO_CABLE:           return BlynkInject::ERROR_NETWORK_NO_CABLE;
+      case NetMgrEthernet.NETMGR_ERR_IP_NOT_ASSIGNED:    return BlynkInject::ERROR_NETWORK_NO_ADDRESS;
+      default: break;
+      }
+    }
+#endif
+#ifdef NetMgr_Cellular
+    if (_inject._config.intf == "cell") {
+      switch (NetMgrCellular.getError()) {
+      case NetMgrCellular.NETMGR_ERR_NO_NETWORK:           return BlynkInject::ERROR_NETWORK_NOT_FOUND;
+      case NetMgrCellular.NETMGR_ERR_DATA_NOT_CONNECTED:   return BlynkInject::ERROR_NETWORK_NO_ADDRESS;
+      case NetMgrCellular.NETMGR_ERR_SIM_MISSING:          return BlynkInject::ERROR_SIMCARD_MISSING;
+      case NetMgrCellular.NETMGR_ERR_SIM_LOCKED:           return BlynkInject::ERROR_SIMCARD_LOCKED;
+      case NetMgrCellular.NETMGR_ERR_SIM_INVALID_PIN:      return BlynkInject::ERROR_SIMCARD_WRONG_PIN;
+      default: break;
+      }
+    }
+#endif
 
     return BlynkInject::ERROR_NETWORK_TIMEOUT;
   }
@@ -296,7 +327,7 @@ private:
         }
 
         Blynk.sendInternal("meta", "set", "Device UID",   systemGetDeviceUID());
-        Blynk.sendInternal("meta", "set", "Hotspot Name", systemGetDeviceName());
+        Blynk.sendInternal("meta", "set", "Hotspot Name", systemGetFullName());
 
         _timer.setTimeout(10000L, [this]() {
           if (size_t dumpSize = systemCoreDumpSize()) {
@@ -490,6 +521,14 @@ private:
     _store.setBlynkHost(_inject._config.host);
     _store.setBlynkAuth(_inject._config.auth);
 
+    if (_inject._config.forceSave) {
+      // Store the configuration without waiting for a successful connection
+      _store.commit();
+      if (!_store.isSaved()) {
+        LOG_E("Failed to store configuration");
+      }
+    }
+
     if (_onConfigChange) { _onConfigChange(); }
 
     startInitialConnection();
@@ -499,15 +538,15 @@ private:
   {
 #ifdef BLYNK_PRINT
     Blynk.printBanner();
-    LOG_I("----------------------------------------------------");
-    LOG_I(" Device:    %s", systemGetDeviceName().c_str());
-    LOG_I(" Version:   %s (build %s)", BLYNK_FIRMWARE_VERSION, __DATE__ " " __TIME__);
-    LOG_I(" UID:       %s", systemGetDeviceUID().c_str());
+    BLYNK_PRINT.printf("----------------------------------------------------\n");
+    BLYNK_PRINT.printf(" Device:    %s\n", systemGetFullName().c_str());
+    BLYNK_PRINT.printf(" Firmware:  %s (build %s)\n", BLYNK_FIRMWARE_VERSION, __DATE__ " " __TIME__);
+    BLYNK_PRINT.printf(" UID:       %s\n", systemGetDeviceUID().c_str());
     if (_store.isConfigured()) {
-      LOG_I(" Token:     %s - •••• - •••• - ••••", _store.getBlynkAuth().substring(0,4).c_str());
+      BLYNK_PRINT.printf(" Token:     %s - •••• - •••• - ••••\n", _store.getBlynkAuth().substring(0,4).c_str());
     }
-    LOG_I(" Platform:  %s", BLYNK_INFO_DEVICE);
-    LOG_I("----------------------------------------------------");
+    BLYNK_PRINT.printf(" Platform:  %s\n", BLYNK_INFO_DEVICE);
+    BLYNK_PRINT.printf("----------------------------------------------------\n");
 #endif
   }
 

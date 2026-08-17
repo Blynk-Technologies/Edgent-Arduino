@@ -20,6 +20,19 @@
 #include <InternalStorageRenesas.h>
 #elif defined(ESP8266) || defined(ESP32)
 #include "InternalStorageESP.h"
+#elif defined(ARDUINO_AMEBA)
+  #warning "Blynk.Air: OTA update not implemented for Realtek Ameba"
+
+  class InternalStorageClass {
+  public:
+    virtual int open(int) { return false; }
+    virtual size_t write(uint8_t) { return 0; }
+    virtual void close() {}
+    virtual void clear() {}
+    virtual void apply() {}
+    virtual long maxSize() { return 0; }
+  };
+  static InternalStorageClass InternalStorage;
 #else
 #include "InternalStorage.h"
 #endif
@@ -47,17 +60,25 @@ protected:
         if (_is_running) {
             return false;
         }
-        if (size && long(size) > InternalStorage.maxSize()) {
+        const long maxSize = InternalStorage.maxSize();
+        if (maxSize <= 0) {
+            return false;
+        }
+        if (!size) {
+            size = size_t(maxSize);
+        } else if (long(size) > maxSize) {
             return false;
         }
         //InternalStorage.debugPrint();
-        _is_running = InternalStorage.open(InternalStorage.maxSize());
+        _is_running = InternalStorage.open(int(size));
         return _is_running;
     }
 
     bool doWrite(const uint8_t* buff, unsigned len) override {
         for (unsigned i = 0; i < len; i++) {
-            InternalStorage.write(buff[i]);
+            if (1 != InternalStorage.write(buff[i])) {
+                return false;
+            }
         }
         return true;
     }

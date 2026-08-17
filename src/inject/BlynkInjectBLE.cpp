@@ -79,7 +79,8 @@ void BlynkInject::begin(String name, String vendor, String tmpl_id, String fw_ty
         if (_ota) { _ota->processRawPacket(data, len); }
     };
 #endif
-    _ble.begin(_name.c_str());
+    const String tmpl_name = systemGetTemplateName();
+    _ble.begin(_name.c_str(), tmpl_name.c_str());
     LOG_I("Provisioning started");
 }
 
@@ -242,7 +243,7 @@ void BlynkInject::parseMessage() {
           else if (key == "gw")     { _config.gw    = item.value().as<String>(); }
           else if (key == "dns")    { _config.dns   = item.value().as<String>(); }
           else if (key == "dns2")   { _config.dns2  = item.value().as<String>(); }
-          else if (key == "save")   { _config.forceSave = true; }
+          else if (key == "save")   { _config.forceSave = item.value().as<bool>(); }
           else                      { foundInvalid = true; }
         }
         if (!foundInvalid) {
@@ -251,6 +252,7 @@ void BlynkInject::parseMessage() {
           sendMsg(R"json({"t":"set_fail"})json");
         }
     } else if (t == "connect") {
+        // TODO: per-interface validation on NetMgg side?
         if (_config.auth.length() == 32 &&
             ((_config.intf == "wifi" && _config.ssid.length()) ||
              (_config.intf == "cell") ||

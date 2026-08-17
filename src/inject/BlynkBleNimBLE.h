@@ -30,7 +30,7 @@ public:
         : _connected(false)
     {}
 
-    void begin(const char* name) {
+    void begin(const char* name, const char* short_name = nullptr) {
         // Create the BLE Device
         NimBLEDevice::init(name);
         _sem_indicate = xSemaphoreCreateCounting(CONFIG_BT_NIMBLE_GATT_MAX_PROCS, CONFIG_BT_NIMBLE_GATT_MAX_PROCS);
@@ -73,21 +73,36 @@ public:
             }
         }
 
+        // Primary advertising
+        NimBLEAdvertisementData advData;
+        advData.setFlags(BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP);
+        advData.addServiceUUID(_service->getUUID());
+        if (short_name) {
+            const size_t len = strnlen(short_name, 16);
+            if (len >  0 && len <= 8) {
+                advData.setShortName(short_name);
+            }
+        }
+
+        // Scan response
+        NimBLEAdvertisementData scanData;
+        scanData.setName(name, true);
+
         // Start advertising
         NimBLEAdvertising* adv = _server->getAdvertising();
         adv->enableScanResponse(true);
-        adv->addServiceUUID(_service->getUUID());
-        adv->setName(name);
+        adv->setAdvertisementData(advData);
+        adv->setScanResponseData(scanData);
         adv->start();
     }
 
     void end() {
-        if(_server) {
-            if(auto adv = _server->getAdvertising()) {
+        if (_server) {
+            if (auto adv = _server->getAdvertising()) {
                 adv->stop();
             }
             auto peers = _server->getPeerDevices();
-            for(auto connHandle : peers) {
+            for (auto connHandle : peers) {
                 _server->disconnect(connHandle);
             }
             _server->setCallbacks(NULL);
@@ -95,18 +110,25 @@ public:
         vTaskDelay(pdMS_TO_TICKS(300));
         NimBLEDevice::deinit(true); // !!! clearAll
 
-        if(_sem_indicate) {
+        if (_sem_indicate) {
             vSemaphoreDelete(_sem_indicate);
             _sem_indicate = NULL;
         }
     }
 
     size_t write(const void* buf, size_t len) {
+        if (!_connected || !_tx_char || !_sem_indicate) {
+            return 0;
+        }
         if (xSemaphoreTake(_sem_indicate, pdMS_TO_TICKS(BLE_IND_TIMEOUT_MS)) == pdFALSE) {
             LOG_E("Can't lock semaphore in reasonable time");
             return 0;
         }
-        _tx_char->indicate((uint8_t*)buf, len);
+        if (!_tx_char->indicate((uint8_t*)buf, len)) {
+            // On success, the semaphore is returned by onStatus()
+            xSemaphoreGive(_sem_indicate);
+            return 0;
+        }
 #if LOGGER_LOG_LEVEL >= LOGGER_LEVEL_DEBUG
         char b[len+1];
         memcpy(b, buf, len);
@@ -124,9 +146,9 @@ public:
       String result;
       {
         char* msg = _rx_queue.front();
+        _rx_queue.pop();
         result = msg;
         free(msg);
-        _rx_queue.pop();
       }
       return result;
     }
@@ -169,6 +191,10 @@ private:
 
       if (pChar == _rx_char) {
         char* msg = (char*)malloc(len+1);
+        if (!msg) {
+          LOG_E("Out of memory");
+          return;
+        }
         memcpy(msg, data, len);
         msg[len] = '\0';   // Null-terminate string
         LOG_D(">> %s", msg);
@@ -198,4 +224,3 @@ private:
     NimBLECharacteristic    *_raw_char;
     SemaphoreHandle_t       _sem_indicate = NULL;
 };
-
