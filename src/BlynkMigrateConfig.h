@@ -8,37 +8,36 @@
 #include <string.h>
 #include <Preferences.h>
 
-bool migrateOldConfig(ConfigStore& cfg)
-{
-    const uint8_t OLD_CONFIG_FLAG_VALID       = 0x01;
-    const uint8_t OLD_CONFIG_FLAG_STATIC_IP   = 0x02;
-    const uint32_t OLD_CONFIG_MAGIC           = 0x626C6E6B;
+bool migrateOldConfig(ConfigStore& cfg) {
+    const uint8_t OLD_CONFIG_FLAG_VALID = 0x01;
+    const uint8_t OLD_CONFIG_FLAG_STATIC_IP = 0x02;
+    const uint32_t OLD_CONFIG_MAGIC = 0x626C6E6B;
 
     struct OldWiFiConfigStore {
-        uint32_t  magic;
-        char      version[15];
-        uint8_t   flags;
+        uint32_t magic;
+        char version[15];
+        uint8_t flags;
 
-        char      wifiSSID[34];
-        char      wifiPass[64];
+        char wifiSSID[34];
+        char wifiPass[64];
 
-        char      cloudToken[34];
-        char      cloudHost[34];
-        uint16_t  cloudPort;
+        char cloudToken[34];
+        char cloudHost[34];
+        uint16_t cloudPort;
 
-        uint32_t  staticIP;
-        uint32_t  staticMask;
-        uint32_t  staticGW;
-        uint32_t  staticDNS;
-        uint32_t  staticDNS2;
+        uint32_t staticIP;
+        uint32_t staticMask;
+        uint32_t staticGW;
+        uint32_t staticDNS;
+        uint32_t staticDNS2;
 
-        int       last_error;
+        int last_error;
 
         bool getFlag(uint8_t mask) {
             return (flags & mask) == mask;
         }
     } __attribute__((packed));
-    
+
     Preferences prefs;
     if (!prefs.begin("blynk", true)) {  // read-only
         return false;
@@ -49,10 +48,10 @@ bool migrateOldConfig(ConfigStore& cfg)
         return false;
     }
     // Terminate strings just in case
-    configStore.wifiSSID[sizeof(configStore.wifiSSID)-1] = 0;
-    configStore.wifiPass[sizeof(configStore.wifiPass)-1] = 0;
-    configStore.cloudToken[sizeof(configStore.cloudToken)-1] = 0;
-    configStore.cloudHost[sizeof(configStore.cloudHost)-1] = 0;
+    configStore.wifiSSID[sizeof(configStore.wifiSSID) - 1] = 0;
+    configStore.wifiPass[sizeof(configStore.wifiPass) - 1] = 0;
+    configStore.cloudToken[sizeof(configStore.cloudToken) - 1] = 0;
+    configStore.cloudHost[sizeof(configStore.cloudHost) - 1] = 0;
 
     // Validate old config
     if (configStore.magic != OLD_CONFIG_MAGIC) {
@@ -70,14 +69,16 @@ bool migrateOldConfig(ConfigStore& cfg)
 
     String oldUID;
     {
-        uint32_t uid[3] = { 0, };
+        uint32_t uid[3] = {
+            0,
+        };
         if (prefs.getBytes("dev_uid", uid, sizeof(uid)) == sizeof(uid)) {
             char str[64];
             const uint8_t* id = (const uint8_t*)uid;
             snprintf(str, sizeof(str), "%02x%02x%02x%02x-%02x%02x%02x%02x-%02x%02x%02x%02x",
-                                id[0], id[1], id[2], id[3],
-                                id[4], id[5], id[6], id[7],
-                                id[8], id[9],id[10],id[11]);
+                     id[0], id[1], id[2], id[3],
+                     id[4], id[5], id[6], id[7],
+                     id[8], id[9], id[10], id[11]);
             oldUID = String(str);
         }
     }
@@ -103,8 +104,7 @@ bool migrateOldConfig(ConfigStore& cfg)
     if (configStore.getFlag(OLD_CONFIG_FLAG_STATIC_IP)) {
         if (!NetMgrWiFi.addNetwork(configStore.wifiSSID, configStore.wifiPass,
                                    configStore.staticIP, configStore.staticGW, configStore.staticMask,
-                                   configStore.staticDNS, configStore.staticDNS2))
-        {
+                                   configStore.staticDNS, configStore.staticDNS2)) {
             LOG_E("Failed to migrate WiFi configuration (static IP)");
             return false;
         }

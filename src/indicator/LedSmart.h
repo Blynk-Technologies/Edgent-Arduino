@@ -13,25 +13,24 @@
 
 class LedSmart {
 public:
-  static constexpr bool isRGB = true;
+    static constexpr bool isRGB = true;
 
-  LedSmart(uint8_t pin, neoPixelType type = NEO_GRB + NEO_KHZ800)
-    : _pixel(1, pin, type)
-  {}
+    LedSmart(uint8_t pin, neoPixelType type = NEO_GRB + NEO_KHZ800)
+        : _pixel(1, pin, type) {}
 
-  void initLED() {
-    _pixel.begin();
-  }
+    void initLED() {
+        _pixel.begin();
+    }
 
-  void setRGB(uint32_t color) {
-    _pixel.setPixelColor(0, color);
-    _pixel.show();
-  }
+    void setRGB(uint32_t color) {
+        _pixel.setPixelColor(0, color);
+        _pixel.show();
+    }
 
-  void setLED(uint32_t brightness) {
-    setRGB((brightness << 16) | (brightness << 8) | brightness);
-  }
+    void setLED(uint32_t brightness) {
+        setRGB((brightness << 16) | (brightness << 8) | brightness);
+    }
 
 private:
-  Adafruit_NeoPixel _pixel;
+    Adafruit_NeoPixel _pixel;
 };

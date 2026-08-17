@@ -1,0 +1,57 @@
+---
+# Tuned to match the existing code style, so running the formatter
+# over the tree produces as little churn as possible.
+Language:        Cpp
+BasedOnStyle:    LLVM
+Standard:        c++11
+
+IndentWidth:     4
+UseTab:          Never
+AccessModifierOffset: -4
+IndentCaseLabels: true
+NamespaceIndentation: None
+
+# Preprocessor blocks are indented by 2, the '#' moves with the block
+IndentPPDirectives: BeforeHash
+PPIndentWidth:   2
+
+# No hard limit: existing line breaks and hand-made alignment are kept as-is
+ColumnLimit:     0
+
+PointerAlignment: Left
+ReferenceAlignment: Pointer
+DerivePointerAlignment: false
+QualifierAlignment: Leave
+
+BreakBeforeBraces: Attach
+SpaceBeforeParens: ControlStatements
+
+# Don't split constructs that are already written on a single line
+AllowShortFunctionsOnASingleLine: All
+AllowShortBlocksOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+
+# Leave manual alignment (lookup tables, reset-reason lists, ...) alone
+AlignTrailingComments: Leave
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+AlignConsecutiveMacros: Consecutive
+AlignEscapedNewlines: Left
+AlignAfterOpenBracket: Align
+AlignOperands:   Align
+
+# Include order is platform-sensitive here, never reorder it
+SortIncludes:    Never
+IncludeBlocks:   Preserve
+ReflowComments:  false
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: true
+InsertNewlineAtEOF: true
+InsertBraces:    false
+SeparateDefinitionBlocks: Leave
+FixNamespaceComments: false
+SpacesBeforeTrailingComments: 1
+Cpp11BracedListStyle: false

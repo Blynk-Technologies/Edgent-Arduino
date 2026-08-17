@@ -12,15 +12,13 @@
 #include <BLE2902.h>
 #include <queue>
 
-constexpr static char SERVICE_UUID[]            = "95e30001-5737-45a9-a092-a88e2e5dd659";
-constexpr static char CHARACTERISTIC_UUID_RX[]  = "95e30002-5737-45a9-a092-a88e2e5dd659";
-constexpr static char CHARACTERISTIC_UUID_TX[]  = "95e30003-5737-45a9-a092-a88e2e5dd659";
+constexpr static char SERVICE_UUID[] = "95e30001-5737-45a9-a092-a88e2e5dd659";
+constexpr static char CHARACTERISTIC_UUID_RX[] = "95e30002-5737-45a9-a092-a88e2e5dd659";
+constexpr static char CHARACTERISTIC_UUID_TX[] = "95e30003-5737-45a9-a092-a88e2e5dd659";
 constexpr static char CHARACTERISTIC_UUID_RAW[] = "95e30004-5737-45a9-a092-a88e2e5dd659";
 
-class BlynkBLE :
-    public BLEServerCallbacks,
-    public BLECharacteristicCallbacks
-{
+class BlynkBLE : public BLEServerCallbacks,
+                 public BLECharacteristicCallbacks {
 
 public:
     typedef void (*rawDataCb_t)(const uint8_t* data, size_t len);
@@ -28,8 +26,7 @@ public:
     rawDataCb_t onRawData = nullptr;
 
     BlynkBLE()
-        : _connected(false)
-    {}
+        : _connected(false) {}
 
     void begin(const char* name) {
         // Create the BLE Device
@@ -46,18 +43,18 @@ public:
 
         // Create a BLE Characteristic
         _tx_char = _service->createCharacteristic(
-                            CHARACTERISTIC_UUID_TX,
-                            BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_INDICATE);
+            CHARACTERISTIC_UUID_TX,
+            BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_INDICATE);
 
         _tx_char->addDescriptor(new BLE2902());
 
         _rx_char = _service->createCharacteristic(
-                            CHARACTERISTIC_UUID_RX,
-                            BLECharacteristic::PROPERTY_WRITE_NR | BLECharacteristic::PROPERTY_WRITE);
+            CHARACTERISTIC_UUID_RX,
+            BLECharacteristic::PROPERTY_WRITE_NR | BLECharacteristic::PROPERTY_WRITE);
 
         _raw_char = _service->createCharacteristic(
-                            CHARACTERISTIC_UUID_RAW,
-                            BLECharacteristic::PROPERTY_WRITE_NR | BLECharacteristic::PROPERTY_WRITE);
+            CHARACTERISTIC_UUID_RAW,
+            BLECharacteristic::PROPERTY_WRITE_NR | BLECharacteristic::PROPERTY_WRITE);
 
         _rx_char->setCallbacks(this);
         _raw_char->setCallbacks(this);
@@ -91,14 +88,14 @@ public:
     }
 
     String read() {
-      String result;
-      {
-        char* msg = _rx_queue.front();
-        result = msg;
-        free(msg);
-        _rx_queue.pop();
-      }
-      return result;
+        String result;
+        {
+            char* msg = _rx_queue.front();
+            result = msg;
+            free(msg);
+            _rx_queue.pop();
+        }
+        return result;
     }
 
     bool available() {
@@ -114,8 +111,7 @@ public:
     }
 
 private:
-
-    void onConnect(BLEServer* server, esp_ble_gatts_cb_param_t *param) override {
+    void onConnect(BLEServer* server, esp_ble_gatts_cb_param_t* param) override {
         //Serial.println("BLE connected");
         _connected = true;
         server->updateConnParams(param->connect.remote_bda, 6, 12, 0, 200);
@@ -126,36 +122,36 @@ private:
         _connected = false;
     }
 
-    void onWrite(BLECharacteristic *pChar) override {
-      const uint8_t* data = (const uint8_t*)pChar->getValue().data();
-      uint16_t len  = pChar->getLength();
+    void onWrite(BLECharacteristic* pChar) override {
+        const uint8_t* data = (const uint8_t*)pChar->getValue().data();
+        uint16_t len = pChar->getLength();
 
-      if (!data || !len) {
-        return;
-      }
+        if (!data || !len) {
+            return;
+        }
 
-      if (pChar == _rx_char) {
+        if (pChar == _rx_char) {
         //Serial.write(">> ");
         //Serial.write(data, len);
         //Serial.println();
 
-        char* msg = (char*)malloc(len+1);
-        memcpy(msg, data, len);
-        msg[len] = 0;   // Null-terminate string
-        {
-          _rx_queue.push(msg);
+            char* msg = (char*)malloc(len + 1);
+            memcpy(msg, data, len);
+            msg[len] = 0;   // Null-terminate string
+            {
+                _rx_queue.push(msg);
+            }
+        } else if (pChar == _raw_char) {
+            if (onRawData) onRawData(data, len);
         }
-      } else if (pChar == _raw_char) {
-        if (onRawData) onRawData(data, len);
-      }
     }
 
 private:
-    bool                    _connected;
-    std::queue<char*>       _rx_queue;
-    BLEServer               *_server;
-    BLEService              *_service;
-    BLECharacteristic       *_tx_char;
-    BLECharacteristic       *_rx_char;
-    BLECharacteristic       *_raw_char;
+    bool _connected;
+    std::queue<char*> _rx_queue;
+    BLEServer* _server;
+    BLEService* _service;
+    BLECharacteristic* _tx_char;
+    BLECharacteristic* _rx_char;
+    BLECharacteristic* _raw_char;
 };

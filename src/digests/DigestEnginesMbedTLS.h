@@ -13,66 +13,66 @@
 
 #pragma once
 
-template<unsigned MD, unsigned DS, unsigned BS>
+template <unsigned MD, unsigned DS, unsigned BS>
 class DigestEngineMbedTLS {
 public:
-  static const size_t DIGEST_SIZE = DS;
-  static const size_t BLOCK_SIZE  = BS;
+    static const size_t DIGEST_SIZE = DS;
+    static const size_t BLOCK_SIZE = BS;
 
-  DigestEngineMbedTLS() {
-    setup();
-    mbedtls_md_starts(&m_ctx);
-  }
-
-  DigestEngineMbedTLS(const DigestEngineMbedTLS& other) {
-    setup();
-    mbedtls_md_clone(&m_ctx, &other.m_ctx);
-  }
-
-  DigestEngineMbedTLS& operator=(const DigestEngineMbedTLS& other) {
-    if (this != &other) {
-      mbedtls_md_clone(&m_ctx, &other.m_ctx);
+    DigestEngineMbedTLS() {
+        setup();
+        mbedtls_md_starts(&m_ctx);
     }
-    return *this;
-  }
 
-  ~DigestEngineMbedTLS() {
-    mbedtls_md_free(&m_ctx);
-  }
+    DigestEngineMbedTLS(const DigestEngineMbedTLS& other) {
+        setup();
+        mbedtls_md_clone(&m_ctx, &other.m_ctx);
+    }
 
-  unsigned getDigestSize() const { return DIGEST_SIZE; }
+    DigestEngineMbedTLS& operator=(const DigestEngineMbedTLS& other) {
+        if (this != &other) {
+            mbedtls_md_clone(&m_ctx, &other.m_ctx);
+        }
+        return *this;
+    }
 
-  void reset() {
-    mbedtls_md_starts(&m_ctx);
-  }
+    ~DigestEngineMbedTLS() {
+        mbedtls_md_free(&m_ctx);
+    }
 
-  void update(const void* data, size_t len) {
-    mbedtls_md_update(&m_ctx, (const unsigned char*)data, len);
-  }
+    unsigned getDigestSize() const { return DIGEST_SIZE; }
 
-  void update(uint8_t b) { update(&b, 1); }
+    void reset() {
+        mbedtls_md_starts(&m_ctx);
+    }
+
+    void update(const void* data, size_t len) {
+        mbedtls_md_update(&m_ctx, (const unsigned char*)data, len);
+    }
+
+    void update(uint8_t b) { update(&b, 1); }
 
   /*
    * Writes DIGEST_SIZE bytes into result.
    * Does not modify the engine, so it can be called multiple times,
    * as well as followed by more update() calls.
    */
-  void getDigestBuffer(uint8_t* result) const {
-    mbedtls_md_context_t tmp;
-    mbedtls_md_init(&tmp);
-    mbedtls_md_setup(&tmp, mbedtls_md_info_from_type((mbedtls_md_type_t)MD), 0);
-    mbedtls_md_clone(&tmp, &m_ctx);
-    mbedtls_md_finish(&tmp, result);
-    mbedtls_md_free(&tmp);
-  }
+    void getDigestBuffer(uint8_t* result) const {
+        mbedtls_md_context_t tmp;
+        mbedtls_md_init(&tmp);
+        mbedtls_md_setup(&tmp, mbedtls_md_info_from_type((mbedtls_md_type_t)MD), 0);
+        mbedtls_md_clone(&tmp, &m_ctx);
+        mbedtls_md_finish(&tmp, result);
+        mbedtls_md_free(&tmp);
+    }
 
 private:
-  void setup() {
-    mbedtls_md_init(&m_ctx);
-    mbedtls_md_setup(&m_ctx, mbedtls_md_info_from_type((mbedtls_md_type_t)MD), 0);
-  }
+    void setup() {
+        mbedtls_md_init(&m_ctx);
+        mbedtls_md_setup(&m_ctx, mbedtls_md_info_from_type((mbedtls_md_type_t)MD), 0);
+    }
 
-  mbedtls_md_context_t m_ctx;
+    mbedtls_md_context_t m_ctx;
 };
 
 typedef DigestEngineMbedTLS<MBEDTLS_MD_SHA256, 32, 64> DigestEngineSHA256;

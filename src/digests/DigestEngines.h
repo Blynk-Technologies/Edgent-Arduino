@@ -32,7 +32,7 @@ class DigestEngineCRC32 {
 
 public:
     static const size_t DIGEST_SIZE = 4;
-    static const size_t BLOCK_SIZE  = 1;
+    static const size_t BLOCK_SIZE = 1;
 
     DigestEngineCRC32() {
         reset();
@@ -69,8 +69,8 @@ public:
 
     void getDigestBuffer(uint8_t* buffer) const {
         uint32_t result = ~_state;
-        buffer[3] = (result >>  0) & 0xFF;
-        buffer[2] = (result >>  8) & 0xFF;
+        buffer[3] = (result >> 0) & 0xFF;
+        buffer[2] = (result >> 8) & 0xFF;
         buffer[1] = (result >> 16) & 0xFF;
         buffer[0] = (result >> 24) & 0xFF;
     }
@@ -80,11 +80,11 @@ private:
 };
 
 
-template<typename T>
+template <typename T>
 String getDigestBase64(const T& md) {
     const unsigned len = T::DIGEST_SIZE;
     uint8_t buffer[len];
-    uint8_t *pos;
+    uint8_t* pos;
     const uint8_t *end, *in;
     const unsigned olen = len * 4 / 3 + 4 + 1; /* 3-byte blocks to 4-byte + nul */
     uint8_t output[olen];
@@ -112,7 +112,7 @@ String getDigestBase64(const T& md) {
             *pos++ = '=';
         } else {
             *pos++ = base64_table[((in[0] & 0x03) << 4) |
-                          (in[1] >> 4)];
+                                  (in[1] >> 4)];
             *pos++ = base64_table[(in[1] & 0x0f) << 2];
         }
         *pos++ = '=';
@@ -123,11 +123,11 @@ String getDigestBase64(const T& md) {
     return String((const char*)output);
 }
 
-template<typename T>
+template <typename T>
 String getDigestHex(const T& md) {
     const unsigned len = T::DIGEST_SIZE;
     uint8_t buffer[len];
-    char    output[(len * 2) + 1];
+    char output[(len * 2) + 1];
     md.getDigestBuffer(buffer);
     for (unsigned i = 0; i < len; i++) {
         sprintf(output + (i * 2), "%02x", buffer[i]);

@@ -20,7 +20,7 @@ typedef std::mutex BlynkBleLock;
 #else
 class BlynkBleLock {
 public:
-    void lock()   {}
+    void lock() {}
     void unlock() {}
 };
 #endif

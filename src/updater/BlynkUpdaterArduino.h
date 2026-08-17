@@ -9,53 +9,50 @@
 
 // From ArduinoOTA.h
 #ifdef __AVR__
-#if FLASHEND >= 0xFFFF
-#include "InternalStorageAVR.h"
-#endif
+  #if FLASHEND >= 0xFFFF
+    #include "InternalStorageAVR.h"
+  #endif
 #elif defined(ARDUINO_ARCH_STM32)
-#include <InternalStorageSTM32.h>
+  #include <InternalStorageSTM32.h>
 #elif defined(ARDUINO_ARCH_RP2040)
-#include <InternalStorageRP2.h>
+  #include <InternalStorageRP2.h>
 #elif defined(ARDUINO_ARCH_RENESAS_UNO)
-#include <InternalStorageRenesas.h>
+  #include <InternalStorageRenesas.h>
 #elif defined(ESP8266) || defined(ESP32)
-#include "InternalStorageESP.h"
+  #include "InternalStorageESP.h"
 #elif defined(ARDUINO_AMEBA)
   #warning "Blynk.Air: OTA update not implemented for Realtek Ameba"
 
-  class InternalStorageClass {
-  public:
+class InternalStorageClass {
+public:
     virtual int open(int) { return false; }
     virtual size_t write(uint8_t) { return 0; }
     virtual void close() {}
     virtual void clear() {}
     virtual void apply() {}
     virtual long maxSize() { return 0; }
-  };
-  static InternalStorageClass InternalStorage;
+};
+static InternalStorageClass InternalStorage;
 #else
-#include "InternalStorage.h"
+  #include "InternalStorage.h"
 #endif
 // End ArduinoOTA.h
 
 class BlynkUpdater
-    : public BlynkUpdaterBase
-{
+    : public BlynkUpdaterBase {
 public:
-
     void apply() override {
         delay(50);
         InternalStorage.apply();
     }
 
-    bool canRollback() override      { return false; }
-    void rollback() override         { /* not supported */ }
+    bool canRollback() override { return false; }
+    void rollback() override { /* not supported */ }
 
-    bool isRunning() const override  { return _is_running; }
-    String errorString() override    { return "internal error"; }
+    bool isRunning() const override { return _is_running; }
+    String errorString() override { return "internal error"; }
 
 protected:
-
     bool doBegin(size_t size) override {
         if (_is_running) {
             return false;

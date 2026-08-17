@@ -18,7 +18,6 @@
  */
 class BlynkUpdaterBase {
 public:
-
     virtual ~BlynkUpdaterBase() {}
 
     // Starts an update. size 0 means "use all the available space"
@@ -87,30 +86,28 @@ public:
     // Amount of data written so far
     size_t getWrittenSize() const { return _written; }
 
-    virtual void   apply() = 0;
-    virtual bool   canRollback() = 0;
-    virtual void   rollback() = 0;
-    virtual bool   isRunning() const = 0;
+    virtual void apply() = 0;
+    virtual bool canRollback() = 0;
+    virtual void rollback() = 0;
+    virtual bool isRunning() const = 0;
     virtual String errorString() = 0;
 
 protected:
-
     virtual bool doBegin(size_t size) = 0;
     virtual bool doWrite(const uint8_t* buff, unsigned len) = 0;
     virtual bool doEnd() = 0;
     virtual void doAbort() = 0;
 
 private:
-
     void reset() {
         _expected_sha = "";
         _sha.reset();
         _written = 0;
     }
 
-    DigestEngineSHA256  _sha;
-    String              _expected_sha;
-    size_t              _written = 0;
+    DigestEngineSHA256 _sha;
+    String _expected_sha;
+    size_t _written = 0;
 };
 
 #if defined(ESP32)
@@ -127,6 +124,6 @@ inline BlynkUpdater& getBlynkUpdater() {
     return instance;
 }
 
-#define ArduinoUpdate  (getBlynkUpdater())
+#define ArduinoUpdate (getBlynkUpdater())
 
 #endif

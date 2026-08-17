@@ -14,13 +14,13 @@
 
 #if defined(CONFIG_USE_SSL)
 
-#include <WiFiClientSecure.h>
+  #include <WiFiClientSecure.h>
 
-#if defined(ESP8266)
-  #define CA_CERT_ATTR  PROGMEM
-#else
-  #define CA_CERT_ATTR  // NONE
-#endif
+  #if defined(ESP8266)
+    #define CA_CERT_ATTR PROGMEM
+  #else
+    #define CA_CERT_ATTR  // NONE
+  #endif
 
 /*
  * 4096 bit, ISRG Root X1,            expires: Mon, 04 Jun 2035 11:04:38 GMT
@@ -108,122 +108,119 @@ MrY=
 
 #if defined(NetMgr_WiFi) && defined(ESP32)
   #define BlynkHasWiFiClient
-  WiFiClient       _blynkWiFiClient;
+WiFiClient _blynkWiFiClient;
   #if defined(CONFIG_USE_SSL)
-  #define BlynkHasWiFiClientSSL
-  WiFiClientSecure _blynkWiFiClientSSL;
+    #define BlynkHasWiFiClientSSL
+WiFiClientSecure _blynkWiFiClientSSL;
   #endif
-  void setupClientWiFi() {
+void setupClientWiFi() {
     // Connection timeout (ms)
     _blynkWiFiClient.setTimeout(3);
-    #if defined(CONFIG_USE_SSL)
+  #if defined(CONFIG_USE_SSL)
     _blynkWiFiClientSSL.setTimeout(3);
     _blynkWiFiClientSSL.setCACert(ROOT_CA_CERT);
     _blynkWiFiClientSSL.setHandshakeTimeout(10); // seconds
-    #endif
-  }
+  #endif
+}
 #elif defined(NetMgr_WiFi) && defined(ESP8266)
   #define BlynkHasWiFiClient
-  WiFiClient       _blynkWiFiClient;
+WiFiClient _blynkWiFiClient;
   #if defined(CONFIG_USE_SSL)
-  #define BlynkHasWiFiClientSSL
-  WiFiClientSecure _blynkWiFiClientSSL;
-  X509List         _blynkCert(ROOT_CA_CERT);
+    #define BlynkHasWiFiClientSSL
+WiFiClientSecure _blynkWiFiClientSSL;
+X509List _blynkCert(ROOT_CA_CERT);
   #endif
-  void setupClientWiFi() {
+void setupClientWiFi() {
     // Connection timeout (ms)
     _blynkWiFiClient.setTimeout(3000);
-    #if defined(CONFIG_USE_SSL)
+  #if defined(CONFIG_USE_SSL)
     _blynkWiFiClientSSL.setTimeout(3000);
     _blynkWiFiClientSSL.setBufferSizes(2048, 512);
     _blynkWiFiClientSSL.setTrustAnchors(&_blynkCert);
-    #endif
-  }
+  #endif
+}
 #elif defined(NetMgr_WiFi) && defined(SEEED_WIO_TERMINAL)
   #define BlynkHasWiFiClient
-  WiFiClient       _blynkWiFiClient;
+WiFiClient _blynkWiFiClient;
   #if defined(CONFIG_USE_SSL)
-  #define BlynkHasWiFiClientSSL
-  WiFiClientSecure _blynkWiFiClientSSL;
+    #define BlynkHasWiFiClientSSL
+WiFiClientSecure _blynkWiFiClientSSL;
   #endif
-  void setupClientWiFi() {
+void setupClientWiFi() {
     _blynkWiFiClient.setTimeout(6);
-    #if defined(CONFIG_USE_SSL)
+  #if defined(CONFIG_USE_SSL)
     _blynkWiFiClientSSL.setTimeout(6);
     _blynkWiFiClientSSL.setCACert(ROOT_CA_CERT);
     //_blynkWiFiClientSSL.setHandshakeTimeout(10); -> crashes on Wio Terminal
-    #endif
-  }
+  #endif
+}
 #endif
 
 
 inline void setupNetMgrClients() {
 #if defined(BlynkHasWiFiClient)
-  setupClientWiFi();
+    setupClientWiFi();
 #endif
 }
 
 Client* getConnectedClient(const String& protocol,
                            const String& host, int port,
-                                 String& type)
-{
+                           String& type) {
   // Try to connect using the specified protocol (WiFi only)
 
 #if defined(BlynkHasWiFiClient)
-  _blynkWiFiClient.stop();
+    _blynkWiFiClient.stop();
 #endif
 #if defined(BlynkHasWiFiClientSSL)
-  _blynkWiFiClientSSL.stop();
+    _blynkWiFiClientSSL.stop();
 #endif
 
-  int attempts = 0;
-  if (protocol == "http" || protocol == "tcp") {
+    int attempts = 0;
+    if (protocol == "http" || protocol == "tcp") {
     // Non-SSL connections
 #if defined(BlynkHasWiFiClient)
-    if ((type == "any" || type == "wifi") && NetMgrWiFi.isConnected()) {
-      attempts++;
-      if (_blynkWiFiClient.connect(host.c_str(), port)) {
-        type = "wifi";
-        return &_blynkWiFiClient;
-      }
-    }
+        if ((type == "any" || type == "wifi") && NetMgrWiFi.isConnected()) {
+            attempts++;
+            if (_blynkWiFiClient.connect(host.c_str(), port)) {
+                type = "wifi";
+                return &_blynkWiFiClient;
+            }
+        }
 #endif
-  } else if (protocol == "https" || protocol == "tls") {
+    } else if (protocol == "https" || protocol == "tls") {
     // SSL connections
 #if defined(BlynkHasWiFiClientSSL)
-    if ((type == "any" || type == "wifi") && NetMgrWiFi.isConnected()) {
-      attempts++;
-      if (_blynkWiFiClientSSL.connect(host.c_str(), port)) {
-        type = "wifi";
-        return &_blynkWiFiClientSSL;
-      }
-    }
+        if ((type == "any" || type == "wifi") && NetMgrWiFi.isConnected()) {
+            attempts++;
+            if (_blynkWiFiClientSSL.connect(host.c_str(), port)) {
+                type = "wifi";
+                return &_blynkWiFiClientSSL;
+            }
+        }
 #endif
-  } else {
-    LOG_E("Unsupported protocol: %s", protocol.c_str());
-    return NULL;
-  }
+    } else {
+        LOG_E("Unsupported protocol: %s", protocol.c_str());
+        return NULL;
+    }
 
-  if (!attempts) {
-    LOG_E("Network interface not found");
-    return NULL;
-  }
+    if (!attempts) {
+        LOG_E("Network interface not found");
+        return NULL;
+    }
 
-  type = "none";
-  return NULL;
+    type = "none";
+    return NULL;
 }
 
 Client* getConnectedClient(const String& protocol,
-                           const String& host, int port)
-{
-  String type = "any";
-  return getConnectedClient(protocol, host, port, type);
+                           const String& host, int port) {
+    String type = "any";
+    return getConnectedClient(protocol, host, port, type);
 }
 
 template <typename T>
 class BlynkNetMgrClient
-    : public BlynkArduinoClientGen<T>
-{
+    : public BlynkArduinoClientGen<T> {
 public:
     BlynkNetMgrClient() {}
 
@@ -248,10 +245,10 @@ public:
 
     bool connect() {
 #ifdef CONFIG_USE_SSL
-        if (_connectClient("tls", 443))  { return true; }
+        if (_connectClient("tls", 443)) { return true; }
         if (_connectClient("tls", 9443)) { return true; }
 #else
-        if (_connectClient("tcp", 80))   { return true; }
+        if (_connectClient("tcp", 80)) { return true; }
         if (_connectClient("tcp", 8080)) { return true; }
 #endif
         // No client connected
@@ -259,39 +256,37 @@ public:
         BlynkArduinoClientGen<T>::isConn = false;
         return false;
     }
+
 private:
     String _network;
 };
 
 template <typename Transport>
 class BlynkClass
-    : public BlynkProtocol<Transport>
-{
+    : public BlynkProtocol<Transport> {
     typedef BlynkProtocol<Transport> Base;
+
 public:
     BlynkClass(Transport& transp)
         : Base(transp) {}
 
     void config(const char* auth,
-                const char* domain = BLYNK_DEFAULT_DOMAIN)
-    {
+                const char* domain = BLYNK_DEFAULT_DOMAIN) {
         Base::begin(auth);
         this->conn.begin(domain, 0);
     }
 
     void config(const char* auth,
-                IPAddress   ip)
-    {
+                IPAddress ip) {
         Base::begin(auth);
         this->conn.begin(ip, 0);
     }
-
 };
 
 typedef BlynkNetMgrClient<Client> BlynkTransport;
 
-static BlynkTransport       _blynkTransport;
-BlynkClass<BlynkTransport>  Blynk(_blynkTransport);
+static BlynkTransport _blynkTransport;
+BlynkClass<BlynkTransport> Blynk(_blynkTransport);
 
 #include <BlynkWidgets.h>
 

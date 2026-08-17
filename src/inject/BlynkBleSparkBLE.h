@@ -9,12 +9,11 @@
   #error "Blynk.Inject works using BLE, the target platform lacks BLE support"
 #endif
 
-constexpr static char SERVICE_UUID[]            = "95e30001-5737-45a9-a092-a88e2e5dd659";
-constexpr static char CHARACTERISTIC_UUID_RX[]  = "95e30002-5737-45a9-a092-a88e2e5dd659";
-constexpr static char CHARACTERISTIC_UUID_TX[]  = "95e30003-5737-45a9-a092-a88e2e5dd659";
+constexpr static char SERVICE_UUID[] = "95e30001-5737-45a9-a092-a88e2e5dd659";
+constexpr static char CHARACTERISTIC_UUID_RX[] = "95e30002-5737-45a9-a092-a88e2e5dd659";
+constexpr static char CHARACTERISTIC_UUID_TX[] = "95e30003-5737-45a9-a092-a88e2e5dd659";
 
-class BlynkBLE
-{
+class BlynkBLE {
 
 public:
     BlynkBLE() {}
@@ -26,11 +25,11 @@ public:
             _queue_mutex = new Mutex();
 
             _tx_char = new BleCharacteristic(nullptr,
-                            BleCharacteristicProperty::NOTIFY,
-                            CHARACTERISTIC_UUID_TX, SERVICE_UUID);
+                                             BleCharacteristicProperty::NOTIFY,
+                                             CHARACTERISTIC_UUID_TX, SERVICE_UUID);
             _rx_char = new BleCharacteristic(nullptr,
-                            BleCharacteristicProperty::WRITE_WO_RSP | BleCharacteristicProperty::WRITE,
-                            CHARACTERISTIC_UUID_RX, SERVICE_UUID, ble_data_callback, this);
+                                             BleCharacteristicProperty::WRITE_WO_RSP | BleCharacteristicProperty::WRITE,
+                                             CHARACTERISTIC_UUID_RX, SERVICE_UUID, ble_data_callback, this);
 
             BLE.addCharacteristic(*_tx_char);
             BLE.addCharacteristic(*_rx_char);
@@ -50,7 +49,7 @@ public:
         // A bit cleaner way:
         scanRspData.clear();
         scanRspData.append(BleAdvertisingDataType::COMPLETE_LOCAL_NAME,
-                          (const uint8_t*)name, strlen(name));
+                           (const uint8_t*)name, strlen(name));
 
         // TODO: set device name in GENERIC_ACCESS_SVC->DEVICE_NAME_CHAR
         // Particle seemingly lacks API to do that
@@ -75,14 +74,14 @@ public:
     }
 
     String read() {
-      String result;
-      WITH_LOCK(*_queue_mutex) {
-        char* msg = _rx_queue.front();
-        result = msg;
-        free(msg);
-        _rx_queue.pop();
-      }
-      return result;
+        String result;
+        WITH_LOCK(*_queue_mutex) {
+            char* msg = _rx_queue.front();
+            result = msg;
+            free(msg);
+            _rx_queue.pop();
+        }
+        return result;
     }
 
     bool available() {
@@ -94,28 +93,26 @@ public:
     }
 
 private:
-
     static void ble_data_callback(const uint8_t* data, size_t len,
-                                  const BlePeerDevice& peer, void* self)
-    {
+                                  const BlePeerDevice& peer, void* self) {
         ((BlynkBLE*)self)->onWrite(data, len);
     }
 
     void onWrite(const uint8_t* data, size_t len) {
-      if (data && len > 0) {
-        char* msg = (char*)malloc(len+1);
-        memcpy(msg, data, len);
-        msg[len] = 0;   // Null-terminate string
-        LOG_D(">> %s", msg);
-        WITH_LOCK(*_queue_mutex) {
-          _rx_queue.push(msg);
+        if (data && len > 0) {
+            char* msg = (char*)malloc(len + 1);
+            memcpy(msg, data, len);
+            msg[len] = 0;   // Null-terminate string
+            LOG_D(">> %s", msg);
+            WITH_LOCK(*_queue_mutex) {
+                _rx_queue.push(msg);
+            }
         }
-      }
     }
 
 private:
-    std::queue<char*>       _rx_queue;
-    Mutex*                  _queue_mutex = nullptr;
-    BleCharacteristic*      _rx_char = nullptr;
-    BleCharacteristic*      _tx_char = nullptr;
+    std::queue<char*> _rx_queue;
+    Mutex* _queue_mutex = nullptr;
+    BleCharacteristic* _rx_char = nullptr;
+    BleCharacteristic* _tx_char = nullptr;
 };

@@ -43,13 +43,13 @@
 #if !defined(BLYNK_VENDOR_PREFIX)
   #if defined(BLYNK_DEVICE_PREFIX)
     // Backward compatibility with the old macro
-    #define BLYNK_VENDOR_PREFIX      BLYNK_DEVICE_PREFIX
+    #define BLYNK_VENDOR_PREFIX BLYNK_DEVICE_PREFIX
   #else
-    #define BLYNK_VENDOR_PREFIX      "Blynk"
+    #define BLYNK_VENDOR_PREFIX "Blynk"
   #endif
 #endif
 #if !defined(BLYNK_DEFAULT_SERVER)
-  #define BLYNK_DEFAULT_SERVER       "blynk.cloud"
+  #define BLYNK_DEFAULT_SERVER "blynk.cloud"
 #endif
 
 // Disable built-in analog and digital pin control
@@ -59,11 +59,11 @@
 
 // If max connection retries is exceeded, device enters ERROR state and reboots
 #if !defined(WIFI_CLOUD_MAX_RETRIES)
-  #define WIFI_CLOUD_MAX_RETRIES      500
-#endif 
+  #define WIFI_CLOUD_MAX_RETRIES 500
+#endif
 #if !defined(WIFI_NET_CONNECT_TIMEOUT)
-  #define WIFI_NET_CONNECT_TIMEOUT    50000     // ms
+  #define WIFI_NET_CONNECT_TIMEOUT 50000     // ms
 #endif
 #if !defined(WIFI_CLOUD_CONNECT_TIMEOUT)
-  #define WIFI_CLOUD_CONNECT_TIMEOUT  50000     // ms
+  #define WIFI_CLOUD_CONNECT_TIMEOUT 50000     // ms
 #endif

@@ -21,11 +21,11 @@
   #define nm_ntoh32(x) ntohl(x)
 #elif (defined(ARDUINO) || defined(PARTICLE) || defined(__MBED__))
   #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    #define nm_hton16(x) ( ((x)<<8) | (((x)>>8)&0xFF) )
-    #define nm_hton32(x) ( ((x)<<24 & 0xFF000000UL) | \
-                           ((x)<< 8 & 0x00FF0000UL) | \
-                           ((x)>> 8 & 0x0000FF00UL) | \
-                           ((x)>>24 & 0x000000FFUL) )
+    #define nm_hton16(x) (((x) << 8) | (((x) >> 8) & 0xFF))
+    #define nm_hton32(x) (((x) << 24 & 0xFF000000UL) | \
+                          ((x) << 8 & 0x00FF0000UL) |  \
+                          ((x) >> 8 & 0x0000FF00UL) |  \
+                          ((x) >> 24 & 0x000000FFUL))
     #define nm_ntoh16(x) nm_hton16(x)
     #define nm_ntoh32(x) nm_hton32(x)
   #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
@@ -38,40 +38,35 @@
   #endif
 #endif
 
-static inline
-String macToString(const byte mac[6]) {
-  char buff[20];
-  snprintf(buff, sizeof(buff), "%02X:%02X:%02X:%02X:%02X:%02X",
-           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-  return String(buff);
+static inline String macToString(const byte mac[6]) {
+    char buff[20];
+    snprintf(buff, sizeof(buff), "%02X:%02X:%02X:%02X:%02X:%02X",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    return String(buff);
 }
 
-static inline
-bool macIsValid(const byte* mac) {
-  for (int i = 0; i < 6; i++) {
-      if (mac[i]) return true;
-  }
-  return false;
+static inline bool macIsValid(const byte* mac) {
+    for (int i = 0; i < 6; i++) {
+        if (mac[i]) return true;
+    }
+    return false;
 }
 
-static inline
-String ipToString(IPAddress ip) {
-  char buff[20];
-  snprintf(buff, sizeof(buff), "%d.%d.%d.%d",
-           ip[0], ip[1], ip[2], ip[3]);
-  return String(buff);
+static inline String ipToString(IPAddress ip) {
+    char buff[20];
+    snprintf(buff, sizeof(buff), "%d.%d.%d.%d",
+             ip[0], ip[1], ip[2], ip[3]);
+    return String(buff);
 }
 
-static inline
-bool ipIsValid(IPAddress ip) {
-  return ip[0] || ip[1] || ip[2] || ip[3];
+static inline bool ipIsValid(IPAddress ip) {
+    return ip[0] || ip[1] || ip[2] || ip[3];
 }
 
 class NetMgrBufferWriter {
 public:
     NetMgrBufferWriter(uint8_t* buff, size_t size)
-        : _ptr(buff), _beg(buff), _end(buff+size)
-    {}
+        : _ptr(buff), _beg(buff), _end(buff + size) {}
 
     size_t writeUInt8(uint8_t val) {
         return write(&val, sizeof(val));
@@ -95,7 +90,7 @@ public:
         size_t len = s.length();
         if (_ptr + len + 1 <= _end) {
             *_ptr++ = len;
-            return write((const uint8_t*)s.c_str(), len)+1;
+            return write((const uint8_t*)s.c_str(), len) + 1;
         }
         return 0;
     }
@@ -116,8 +111,7 @@ private:
 class NetMgrBufferReader {
 public:
     NetMgrBufferReader(const uint8_t* buff, size_t size)
-        : _ptr(buff), _beg(buff), _end(buff+size)
-    {}
+        : _ptr(buff), _beg(buff), _end(buff + size) {}
 
     size_t readUInt8(uint8_t& val) {
         return read(&val, sizeof(val));

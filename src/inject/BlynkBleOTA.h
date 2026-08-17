@@ -34,8 +34,7 @@
 class BlynkBleOTA {
 public:
     BlynkBleOTA(BlynkBLE& ble)
-        : _ble(ble)
-    {}
+        : _ble(ble) {}
 
     void processCommand(JsonObject& json) {
         String t = json["t"];
@@ -54,10 +53,10 @@ public:
             size_t len = serializeJson(doc, buff, sizeof(buff));
             sendMsg(buff, len);
         } else if (t == "ota_start") {
-            String   name   = json["name"].as<String>();
-            String   sha    = json["sha256"].as<String>();
+            String name = json["name"].as<String>();
+            String sha = json["sha256"].as<String>();
             unsigned offset = json["offset"].as<unsigned>();
-            unsigned size   = json["size"].as<unsigned>();
+            unsigned size = json["size"].as<unsigned>();
 
             const char* error_msg = nullptr;
             if (!name.endsWith(".bin")) {
@@ -65,8 +64,7 @@ public:
             } else if (size == 0) {
                 error_msg = "wrong size";
             } else if (ArduinoUpdate.isRunning() &&
-                       sha.length() && sha == _expected_sha)
-            {
+                       sha.length() && sha == _expected_sha) {
                 // Try resuming
                 if (offset != ArduinoUpdate.getWrittenSize()) {
                     error_msg = "offset not matching";
@@ -87,7 +85,7 @@ public:
                     error_msg = "wrong sha256";
                 } else {
                     _expected_sha = sha;
-                    _total_size   = size;
+                    _total_size = size;
                 }
             }
 
@@ -105,13 +103,13 @@ public:
 
         } else if (t == "ota_block_apply") {
             unsigned offset = json["offset"].as<unsigned>();
-            String exp_crc  = json["crc"].as<String>();
+            String exp_crc = json["crc"].as<String>();
 
             exp_crc.toLowerCase();
 
             std::unique_lock<BlynkBleLock> lock(_mutex);
 
-            String act_crc  = getDigestHex(_pending_crc);
+            String act_crc = getDigestHex(_pending_crc);
 
             /*LOG_I("Block %d crc: %s (need:%d, size:%d)",
                   offset, act_crc.c_str(),
@@ -122,10 +120,10 @@ public:
             bool error_fatal = false;
             if (!ArduinoUpdate.isRunning()) {
                 error_fatal = true;
-                error_msg  = ArduinoUpdate.errorString();
+                error_msg = ArduinoUpdate.errorString();
             } else if (offset != ArduinoUpdate.getWrittenSize()) {
                 error_fatal = true;
-                error_msg  = "block offset invalid";
+                error_msg = "block offset invalid";
             } else if (exp_crc != act_crc) {
                 LOG_E("CRC mismatch (expected: %s, actual: %s)", exp_crc.c_str(), act_crc.c_str());
 #ifdef BLE_OTA_DUMP_INVALID_BLOCKS
@@ -139,10 +137,10 @@ public:
                 error_msg = "block crc invalid";
             } else if (ArduinoUpdate.getWrittenSize() + _pending_size > _total_size) {
                 error_fatal = true;
-                error_msg  = "file size exceeded";
+                error_msg = "file size exceeded";
             } else if (!ArduinoUpdate.write(_pending_bytes, _pending_size)) {
                 error_fatal = true;
-                error_msg  = ArduinoUpdate.errorString();
+                error_msg = ArduinoUpdate.errorString();
             } else {
                 resetPending();
             }
@@ -171,8 +169,7 @@ public:
         } else if (t == "ota_finish") {
             LOG_I("OTA: %s size: %d",
                   ArduinoUpdate.getSHA256().c_str(),
-                  ArduinoUpdate.getWrittenSize()
-                );
+                  ArduinoUpdate.getWrittenSize());
 
             const char* error_msg = nullptr;
             if (!ArduinoUpdate.isRunning()) {
@@ -214,7 +211,8 @@ public:
         std::lock_guard<BlynkBleLock> lock(_mutex);
 #ifdef BLE_OTA_USE_CHUNK_HEADER
         unsigned chunk_id = data[0];
-        data++; len--;
+        data++;
+        len--;
         if (chunk_id != _pending_chunk) {
             LOG_E("OTA: chunk out of order (exp: %d, got: %d)", _pending_chunk, chunk_id);
         }
@@ -226,7 +224,7 @@ public:
                 ((uint8_t*)data)[0] = 0xFA;
             }
 #endif
-            memcpy(_pending_bytes+_pending_size, data, len);
+            memcpy(_pending_bytes + _pending_size, data, len);
             _pending_size += len;
             _pending_crc.update(data, len);
         } else {
@@ -268,17 +266,17 @@ private:
     }
 
 private:
-    BlynkBLE&                     _ble;
+    BlynkBLE& _ble;
 
-    String                        _expected_sha;
-    unsigned                      _total_size = 0;
+    String _expected_sha;
+    unsigned _total_size = 0;
 
-    BlynkBleLock                  _mutex;
-    uint8_t                       _pending_bytes[BLE_OTA_BUFFER_SIZE];
-    unsigned                      _pending_size = 0;
-    DigestEngineCRC32             _pending_crc;
+    BlynkBleLock _mutex;
+    uint8_t _pending_bytes[BLE_OTA_BUFFER_SIZE];
+    unsigned _pending_size = 0;
+    DigestEngineCRC32 _pending_crc;
 #ifdef BLE_OTA_USE_CHUNK_HEADER
-    unsigned                      _pending_chunk = 0;
+    unsigned _pending_chunk = 0;
 #endif
 };
 

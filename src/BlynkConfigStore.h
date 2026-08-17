@@ -10,116 +10,115 @@
 
 struct ConfigStore {
 
-  bool begin() {
-    return loadPrefs();
-  }
+    bool begin() {
+        return loadPrefs();
+    }
 
   /*
    * Getters
    */
 
-  int           getConfigSkipped() const {  return _cfgskip; }
-  const String& getFirmwareVer() const  {  return _fwver;   }
-  const String& getBlynkAuth() const    {  return _auth;    }
-  const String& getBlynkHost() const    {  return _host;    }
+    int getConfigSkipped() const { return _cfgskip; }
+    const String& getFirmwareVer() const { return _fwver; }
+    const String& getBlynkAuth() const { return _auth; }
+    const String& getBlynkHost() const { return _host; }
 
-  bool isConfigured() const {
-    return (_auth.length() == 32) && isSaved();
-  }
+    bool isConfigured() const {
+        return (_auth.length() == 32) && isSaved();
+    }
 
-  bool isSaved() const {
-    return _saved;
-  }
+    bool isSaved() const {
+        return _saved;
+    }
 
   /*
    * Setters
    */
 
-  void storeConfigSkipped() {
-    _cfgskip++;
-    Preferences prefs;
-    if (prefs.begin(BLYNK_PREFS_NAMESPACE)) {
-      prefs.putString("cfgskip", String(_cfgskip));
+    void storeConfigSkipped() {
+        _cfgskip++;
+        Preferences prefs;
+        if (prefs.begin(BLYNK_PREFS_NAMESPACE)) {
+            prefs.putString("cfgskip", String(_cfgskip));
+        }
     }
-  }
 
-  void storeFirmwareVer(const String& ver) {
-    _fwver = ver;
-    Preferences prefs;
-    if (prefs.begin(BLYNK_PREFS_NAMESPACE)) {
-      prefs.putString("fwver", _fwver);
+    void storeFirmwareVer(const String& ver) {
+        _fwver = ver;
+        Preferences prefs;
+        if (prefs.begin(BLYNK_PREFS_NAMESPACE)) {
+            prefs.putString("fwver", _fwver);
+        }
     }
-  }
 
-  void setBlynkAuth(const String& auth) {
-    _auth = auth;
-    _saved = false;
-  }
-
-  void setBlynkHost(const String& host) {
-    _host = host;
-    _saved = false;
-  }
-
-  void loadDefault() {
-    _saved = false;
-    _cfgskip = 0;
-    _fwver = BLYNK_FIRMWARE_VERSION;
-    _auth = "invalid token";
-    _host = BLYNK_DEFAULT_SERVER;
-  }
-
-  void commit() {
-    Preferences prefs;
-    if (prefs.begin(BLYNK_PREFS_NAMESPACE)) {
-      if (!prefs.putString("host",  _host)) {
-        return;
-      }
-      if (!prefs.putString("auth",  _auth)) {
-        return;
-      }
-      _saved = true;
-    } else {
-      LOG_E("Config write failed");
+    void setBlynkAuth(const String& auth) {
+        _auth = auth;
+        _saved = false;
     }
-  }
 
-  void erase() {
-    Preferences prefs;
-    if (prefs.begin(BLYNK_PREFS_NAMESPACE)) {
-      if (!prefs.clear()) {
-        prefs.remove("cfgskip");
-        prefs.remove("auth");
-        prefs.remove("host");
-      }
-      loadDefault();
-    } else {
-      LOG_E("Config erase failed");
+    void setBlynkHost(const String& host) {
+        _host = host;
+        _saved = false;
     }
-  }
+
+    void loadDefault() {
+        _saved = false;
+        _cfgskip = 0;
+        _fwver = BLYNK_FIRMWARE_VERSION;
+        _auth = "invalid token";
+        _host = BLYNK_DEFAULT_SERVER;
+    }
+
+    void commit() {
+        Preferences prefs;
+        if (prefs.begin(BLYNK_PREFS_NAMESPACE)) {
+            if (!prefs.putString("host", _host)) {
+                return;
+            }
+            if (!prefs.putString("auth", _auth)) {
+                return;
+            }
+            _saved = true;
+        } else {
+            LOG_E("Config write failed");
+        }
+    }
+
+    void erase() {
+        Preferences prefs;
+        if (prefs.begin(BLYNK_PREFS_NAMESPACE)) {
+            if (!prefs.clear()) {
+                prefs.remove("cfgskip");
+                prefs.remove("auth");
+                prefs.remove("host");
+            }
+            loadDefault();
+        } else {
+            LOG_E("Config erase failed");
+        }
+    }
 
 private:
+    bool loadPrefs() {
+        loadDefault();
 
-  bool loadPrefs() {
-    loadDefault();
-
-    Preferences prefs;
-    if (prefs.begin(BLYNK_PREFS_NAMESPACE, true)) { // read-only
-      _cfgskip = prefs.getString("cfgskip", "0").toInt();
-      _fwver = prefs.getString("fwver");
-      _auth  = prefs.getString("auth",  _auth);
-      _host  = prefs.getString("host",  _host);
-      _saved = (_auth.length() == 32);
-      return _saved;
+        Preferences prefs;
+        if (prefs.begin(BLYNK_PREFS_NAMESPACE, true)) { // read-only
+            _cfgskip = prefs.getString("cfgskip", "0").toInt();
+            _fwver = prefs.getString("fwver");
+            _auth = prefs.getString("auth", _auth);
+            _host = prefs.getString("host", _host);
+            _saved = (_auth.length() == 32);
+            return _saved;
+        }
+        LOG_W("No configuration is loaded");
+        return false;
     }
-    LOG_W("No configuration is loaded");
-    return false;
-  }
 
 private:
-  bool          _saved   = false;
-  int           _cfgskip = 0;
-  String        _fwver;
-  String        _auth;
-  String        _host;
+    bool _saved = false;
+    int _cfgskip = 0;
+    String _fwver;
+    String _auth;
+    String _host;
 };

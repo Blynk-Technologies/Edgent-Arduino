@@ -8,10 +8,8 @@
 #define BlynkUpdaterESP8266_h
 
 class BlynkUpdater
-    : public BlynkUpdaterBase
-{
+    : public BlynkUpdaterBase {
 public:
-
     void apply() override {
         delay(50);
         ESP.restart();
@@ -25,11 +23,10 @@ public:
         LOG_E("Rollback not supported on this platform");
     }
 
-    bool isRunning() const override  { return Update.isRunning(); }
-    String errorString() override    { return Update.getErrorString(); }
+    bool isRunning() const override { return Update.isRunning(); }
+    String errorString() override { return Update.getErrorString(); }
 
 protected:
-
     bool doBegin(size_t size) override {
         if (!size) {
             size = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;

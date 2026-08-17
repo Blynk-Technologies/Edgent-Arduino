@@ -10,10 +10,8 @@
 #include <Update.h>
 
 class BlynkUpdater
-    : public BlynkUpdaterBase
-{
+    : public BlynkUpdaterBase {
 public:
-
     void apply() override {
         delay(50);
         ESP.restart();
@@ -30,11 +28,10 @@ public:
         }
     }
 
-    bool isRunning() const override  { return Update.isRunning(); }
-    String errorString() override    { return Update.errorString(); }
+    bool isRunning() const override { return Update.isRunning(); }
+    String errorString() override { return Update.errorString(); }
 
 protected:
-
     bool doBegin(size_t size) override {
         return Update.begin(size ? size : UPDATE_SIZE_UNKNOWN);
     }

@@ -8,20 +8,20 @@
 
 #if defined(CONFIG_USE_INJECT_WIFIAP)
 
-#include "NetMgr.h"
-#include "BlynkSysUtils.h"
-#include <updater/BlynkUpdater.h>
-#include <ArduinoJson.h>
+  #include "NetMgr.h"
+  #include "BlynkSysUtils.h"
+  #include <updater/BlynkUpdater.h>
+  #include <ArduinoJson.h>
 
-#if defined(ESP32)
-  #include <WiFi.h>
-  #include <WebServer.h>
-#elif defined(ESP8266)
-  #include <ESP8266WiFi.h>
-  #include <ESP8266WebServer.h>
-  typedef ESP8266WebServer WebServer;
-#endif
-#include <DNSServer.h>
+  #if defined(ESP32)
+    #include <WiFi.h>
+    #include <WebServer.h>
+  #elif defined(ESP8266)
+    #include <ESP8266WiFi.h>
+    #include <ESP8266WebServer.h>
+typedef ESP8266WebServer WebServer;
+  #endif
+  #include <DNSServer.h>
 
 static const char configForm[] PROGMEM = R"html(
 <!DOCTYPE HTML>
@@ -78,17 +78,16 @@ static const char serverUpdateForm[] PROGMEM = R"html(
 </body></html>
 )html";
 
-#define WIFI_AP_IP                    IPAddress(192, 168, 4, 1)
-#define WIFI_AP_Subnet                IPAddress(255, 255, 255, 0)
-#define CONFIG_AP_URL                 "blynk.setup"
+  #define WIFI_AP_IP     IPAddress(192, 168, 4, 1)
+  #define WIFI_AP_Subnet IPAddress(255, 255, 255, 0)
+  #define CONFIG_AP_URL  "blynk.setup"
 
-WebServer     server(80);
-DNSServer     dnsServer;
-const byte    DNS_PORT = 53;
+WebServer server(80);
+DNSServer dnsServer;
+const byte DNS_PORT = 53;
 
 
-BlynkInject::BlynkInject()
-{}
+BlynkInject::BlynkInject() {}
 
 bool BlynkInject::isUserConfiguring() {
     return _user_started_configuring && WiFi.softAPgetStationNum();
@@ -97,22 +96,19 @@ bool BlynkInject::isAppDisconnected() {
     return _user_started_configuring && !WiFi.softAPgetStationNum();
 }
 
-static inline
-void sendMsg(const char* str) {
+static inline void sendMsg(const char* str) {
     server.send(200, "application/json", str);
     //LOG_D("<< %s", str);
 }
 
-static inline
-void sendMsg(const void* data, unsigned len) {
+static inline void sendMsg(const void* data, unsigned len) {
     //LOG_D("<< %s", data);
     server.setContentLength(len);
     server.send(200, "application/json", "");
     server.sendContent((const char*)data, len);
 }
 
-void BlynkInject::begin(String name, String vendor, String tmpl_id, String fw_type, String fw_ver)
-{
+void BlynkInject::begin(String name, String vendor, String tmpl_id, String fw_type, String fw_ver) {
     if (_started) return;
     _started = true;
 
@@ -126,27 +122,26 @@ void BlynkInject::begin(String name, String vendor, String tmpl_id, String fw_ty
 
     clearRuntimeConfig();
 
-#ifdef NetMgr_WiFi
+  #ifdef NetMgr_WiFi
     WiFi.mode(WIFI_AP_STA);
     delay(100);
     WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_AP_Subnet);
     WiFi.softAP(_name.c_str());
     delay(50);
-#endif
-#ifdef NetMgr_Ethernet
+  #endif
+  #ifdef NetMgr_Ethernet
     NetMgrEthernet.startConfig();
-#endif
-#ifdef NetMgr_Cellular
+  #endif
+  #ifdef NetMgr_Cellular
     NetMgrCellular.startConfig();
-#endif
+  #endif
 
     setupServer();
 
     LOG_I("Provisioning started");
 }
 
-void BlynkInject::end()
-{
+void BlynkInject::end() {
     dnsServer.stop();
     server.stop();
     WiFi.enableAP(false);
@@ -187,40 +182,40 @@ void BlynkInject::setupServer() {
        *       so they are only installed once (they capture `this`,
        *       which is a singleton anyway)
        */
-      static bool handlersInstalled = false;
-      const bool installHandlers = !handlersInstalled;
-      handlersInstalled = true;
+    static bool handlersInstalled = false;
+    const bool installHandlers = !handlersInstalled;
+    handlersInstalled = true;
 
       // Set up DNS Server
-      dnsServer.setTTL(300); // Time-to-live 300s
-      dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure); // Return code for non-accessible domains
-#ifdef WIFI_CAPTIVE_PORTAL_ENABLE
-      dnsServer.start(DNS_PORT, "*", WiFi.softAPIP()); // Point all to our IP
-#else
-      dnsServer.start(DNS_PORT, CONFIG_AP_URL, WiFi.softAPIP());
-      LOG_I("WiFi AP config page: %s", CONFIG_AP_URL);
-#endif
+    dnsServer.setTTL(300); // Time-to-live 300s
+    dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure); // Return code for non-accessible domains
+  #ifdef WIFI_CAPTIVE_PORTAL_ENABLE
+    dnsServer.start(DNS_PORT, "*", WiFi.softAPIP()); // Point all to our IP
+  #else
+    dnsServer.start(DNS_PORT, CONFIG_AP_URL, WiFi.softAPIP());
+    LOG_I("WiFi AP config page: %s", CONFIG_AP_URL);
+  #endif
 
-      if (!installHandlers) {
+    if (!installHandlers) {
         server.begin();
         return;
-      }
+    }
 
-#ifdef WIFI_CAPTIVE_PORTAL_ENABLE
-      server.onNotFound([]() {
+  #ifdef WIFI_CAPTIVE_PORTAL_ENABLE
+    server.onNotFound([]() {
         server.send(200, "text/html", configForm);
-      });
-#else
-      server.onNotFound([]() {
+    });
+  #else
+    server.onNotFound([]() {
         server.send(404, "text/plain", "Not found");
-      });
-#endif
+    });
+  #endif
 
-      server.on("/update", HTTP_GET, []() {
+    server.on("/update", HTTP_GET, []() {
         server.sendHeader("Connection", "close");
         server.send(200, "text/html", serverUpdateForm);
-      });
-      server.on("/update", HTTP_POST, [this]() {
+    });
+    server.on("/update", HTTP_POST, [this]() {
         server.sendHeader("Connection", "close");
         if (ArduinoUpdate.isRunning() && ArduinoUpdate.end()) {
           server.send(200, "text/plain", "OK");
@@ -229,8 +224,7 @@ void BlynkInject::setupServer() {
           ArduinoUpdate.apply();
         } else {
           server.send(500, "text/plain", "FAIL");
-        }
-      }, [this]() {
+        } }, [this]() {
         HTTPUpload& upload = server.upload();
         if (upload.status == UPLOAD_FILE_START) {
           LOG_I("Update: %s", upload.filename.c_str());
@@ -246,38 +240,36 @@ void BlynkInject::setupServer() {
           }
         } else if (upload.status == UPLOAD_FILE_ABORTED) {
           ArduinoUpdate.abort();
-        }
-      });
-      server.on("/", []() {
+        } });
+    server.on("/", []() {
         server.send(200, "text/html", configForm);
-      });
-      server.on("/config", [this]() {
+    });
+    server.on("/config", [this]() {
         LOG_I("Applying configuration...");
         _config.ssid = server.arg("ssid");
         String ssidManual = server.arg("ssidManual");
         if (ssidManual != "") {
-          _config.ssid = ssidManual;
+            _config.ssid = ssidManual;
         }
         _config.intf = server.arg("if");
         _config.pass = server.arg("pass");
-        _config.auth  = server.arg("blynk");
-        _config.host  = server.arg("host");
+        _config.auth = server.arg("blynk");
+        _config.host = server.arg("host");
 
-        _config.ip   = server.arg("ip");
+        _config.ip = server.arg("ip");
         _config.mask = server.arg("mask");
-        _config.gw   = server.arg("gw");
-        _config.dns  = server.arg("dns");
+        _config.gw = server.arg("gw");
+        _config.dns = server.arg("dns");
         _config.dns2 = server.arg("dns2");
 
         const String saveArg = server.arg("save");
-        _config.forceSave  = (saveArg == "1" || saveArg.equalsIgnoreCase("true"));
+        _config.forceSave = (saveArg == "1" || saveArg.equalsIgnoreCase("true"));
 
         // TODO: per-interface validation on NetMgg side?
         if (_config.auth.length() == 32 &&
             ((_config.intf == "wifi" && _config.ssid.length()) ||
              (_config.intf == "cell") ||
-             (_config.intf == "eth" ))
-        ) {
+             (_config.intf == "eth"))) {
             sendMsg(R"json({"status":"ok","msg":"Trying to connect..."})json");
 
             if (provisionCb != nullptr) {
@@ -287,62 +279,62 @@ void BlynkInject::setupServer() {
             LOG_W("Configuration invalid");
             server.send(500, "application/json", R"json({"status":"error","msg":"Configuration invalid"})json");
         }
-      });
-      server.on("/board_info.json", [this]() {
+    });
+    server.on("/board_info.json", [this]() {
         LOG_I("Sending board info");
 
         // Configuring starts with board info request
         _user_started_configuring = true;
 
         JsonDocument writer;
-        writer["vendor"  ] = _vendor;
-        writer["tmpl_id" ] = _tmpl_id;
-        writer["fw_type" ] = _fw_type;
-        writer["fw_ver"  ] = _fw_ver;
-        writer["name"    ] = _name;
-        writer["uid"     ] = systemGetDeviceUID();
-        writer["bssid"   ] = WiFi.softAPmacAddress();
+        writer["vendor"] = _vendor;
+        writer["tmpl_id"] = _tmpl_id;
+        writer["fw_type"] = _fw_type;
+        writer["fw_ver"] = _fw_ver;
+        writer["name"] = _name;
+        writer["uid"] = systemGetDeviceUID();
+        writer["bssid"] = WiFi.softAPmacAddress();
         writer["last_error"] = (int)_last_error;
         JsonArray ifs = writer["ifs"].to<JsonArray>();
-#ifdef NetMgr_WiFi
+  #ifdef NetMgr_WiFi
         if (NetMgrWiFi.isHardwareAvailable()) {
-          JsonObject obj = ifs.add<JsonObject>();
-          obj["name"  ] = "wifi";
-          obj["mac"   ] = NetMgrWiFi.getMacAddress();
-          obj["scan"  ] = NetMgrWiFi.supportsScan()?1:0;
-          obj["5ghz"  ] = NetMgrWiFi.supports5GHz()?1:0;
-          obj["static_ip"] = NetMgrWiFi.supportsStaticIP()?1:0;
+            JsonObject obj = ifs.add<JsonObject>();
+            obj["name"] = "wifi";
+            obj["mac"] = NetMgrWiFi.getMacAddress();
+            obj["scan"] = NetMgrWiFi.supportsScan() ? 1 : 0;
+            obj["5ghz"] = NetMgrWiFi.supports5GHz() ? 1 : 0;
+            obj["static_ip"] = NetMgrWiFi.supportsStaticIP() ? 1 : 0;
         }
-#endif
-#ifdef NetMgr_Cellular
+  #endif
+  #ifdef NetMgr_Cellular
         if (NetMgrCellular.isHardwareAvailable()) {
-          JsonObject obj = ifs.add<JsonObject>();
-          obj["name"  ] = "cell";
-          obj["imei"  ] = NetMgrCellular.getIMEI();
-          obj["imsi"  ] = NetMgrCellular.getIMSI();
-          obj["iccid" ] = NetMgrCellular.getICCID();
-          obj["scan"  ] = NetMgrCellular.supportsScan()?1:0;
-          obj["pin"   ] = NetMgrCellular.supportsSimPin()?1:0;
-          obj["apn"   ] = NetMgrCellular.supportsAPN()?1:0;
+            JsonObject obj = ifs.add<JsonObject>();
+            obj["name"] = "cell";
+            obj["imei"] = NetMgrCellular.getIMEI();
+            obj["imsi"] = NetMgrCellular.getIMSI();
+            obj["iccid"] = NetMgrCellular.getICCID();
+            obj["scan"] = NetMgrCellular.supportsScan() ? 1 : 0;
+            obj["pin"] = NetMgrCellular.supportsSimPin() ? 1 : 0;
+            obj["apn"] = NetMgrCellular.supportsAPN() ? 1 : 0;
         }
-#endif
-#ifdef NetMgr_Ethernet
+  #endif
+  #ifdef NetMgr_Ethernet
         if (NetMgrEthernet.isHardwareAvailable()) {
-          JsonObject obj = ifs.add<JsonObject>();
-          obj["name"  ] = "eth";
-          obj["mac"   ] = NetMgrEthernet.getMacAddress();
-          obj["status"] = NetMgrEthernet.getStatus();
-          if (NetMgrEthernet.isConnected()) {
-            obj["ip"  ] = NetMgrEthernet.getLocalIP();
-          }
-          obj["static_ip"] = NetMgrEthernet.supportsStaticIP()?1:0;
+            JsonObject obj = ifs.add<JsonObject>();
+            obj["name"] = "eth";
+            obj["mac"] = NetMgrEthernet.getMacAddress();
+            obj["status"] = NetMgrEthernet.getStatus();
+            if (NetMgrEthernet.isConnected()) {
+                obj["ip"] = NetMgrEthernet.getLocalIP();
+            }
+            obj["static_ip"] = NetMgrEthernet.supportsStaticIP() ? 1 : 0;
         }
-#endif
+  #endif
         String json;
         serializeJson(writer, json);
         sendMsg(json.c_str(), json.length());
-      });
-      server.on("/wifi_scan.json", []() {
+    });
+    server.on("/wifi_scan.json", []() {
         LOG_I("Scanning WiFi");
 
         int wifi_nets = NetMgrWiFi.scanNetworks();
@@ -352,39 +344,38 @@ void BlynkInject::setupServer() {
         JsonDocument doc;
         JsonArray arr = doc.to<JsonArray>();
         for (int i = 0; i < wifi_nets; i++) {
-          String ssid, sec, bssid;
-          int chan = -1, rssi = 0;
-          if (!NetMgrWiFi.scanGetResult(i, ssid, sec, rssi, bssid, chan)) {
-            continue;
-          }
+            String ssid, sec, bssid;
+            int chan = -1, rssi = 0;
+            if (!NetMgrWiFi.scanGetResult(i, ssid, sec, rssi, bssid, chan)) {
+                continue;
+            }
           // skip weak and hidden networks
-          if (rssi >= -90 && ssid.length()) {
+            if (rssi >= -90 && ssid.length()) {
 
-            JsonObject net = arr.add<JsonObject>();
-            net["ssid"  ] = ssid;
-            net["bssid" ] = bssid;
-            net["rssi"  ] = rssi;
-            net["sec"   ] = sec;
-            net["ch"    ] = chan;
-          }
+                JsonObject net = arr.add<JsonObject>();
+                net["ssid"] = ssid;
+                net["bssid"] = bssid;
+                net["rssi"] = rssi;
+                net["sec"] = sec;
+                net["ch"] = chan;
+            }
         }
         NetMgrWiFi.scanDelete();
         String json;
         serializeJson(doc, json);
         sendMsg(json.c_str(), json.length());
-      });
-      server.on("/reset", []() {
-#ifdef NetMgr_WiFi
+    });
+    server.on("/reset", []() {
+  #ifdef NetMgr_WiFi
         NetMgrWiFi.clearNetworks();
-#endif
+  #endif
         sendMsg(R"json({"status":"ok","msg":"Configuration reset"})json");
-      });
-      server.on("/reboot", []() {
+    });
+    server.on("/reboot", []() {
         systemReboot();
-      });
+    });
 
-      server.begin();
-
+    server.begin();
 }
 
 void BlynkInject::setProvisionCallback(provisionCb_t* cb) {

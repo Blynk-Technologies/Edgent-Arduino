@@ -11,15 +11,13 @@
 
 #define BLE_IND_TIMEOUT_MS 700
 
-constexpr static char SERVICE_UUID[]            = "95e30001-5737-45a9-a092-a88e2e5dd659";
-constexpr static char CHARACTERISTIC_UUID_RX[]  = "95e30002-5737-45a9-a092-a88e2e5dd659";
-constexpr static char CHARACTERISTIC_UUID_TX[]  = "95e30003-5737-45a9-a092-a88e2e5dd659";
+constexpr static char SERVICE_UUID[] = "95e30001-5737-45a9-a092-a88e2e5dd659";
+constexpr static char CHARACTERISTIC_UUID_RX[] = "95e30002-5737-45a9-a092-a88e2e5dd659";
+constexpr static char CHARACTERISTIC_UUID_TX[] = "95e30003-5737-45a9-a092-a88e2e5dd659";
 constexpr static char CHARACTERISTIC_UUID_RAW[] = "95e30004-5737-45a9-a092-a88e2e5dd659";
 
-class BlynkBLE :
-    public NimBLEServerCallbacks,
-    public NimBLECharacteristicCallbacks
-{
+class BlynkBLE : public NimBLEServerCallbacks,
+                 public NimBLECharacteristicCallbacks {
 
 public:
     typedef void (*rawDataCb_t)(const uint8_t* data, size_t len);
@@ -27,8 +25,7 @@ public:
     rawDataCb_t onRawData = nullptr;
 
     BlynkBLE()
-        : _connected(false)
-    {}
+        : _connected(false) {}
 
     void begin(const char* name, const char* short_name = nullptr) {
         // Create the BLE Device
@@ -51,16 +48,16 @@ public:
 
             // Create a BLE Characteristic
             _tx_char = _service->createCharacteristic(
-                                CHARACTERISTIC_UUID_TX,
-                                NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::INDICATE);
+                CHARACTERISTIC_UUID_TX,
+                NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::INDICATE);
 
             _rx_char = _service->createCharacteristic(
-                                CHARACTERISTIC_UUID_RX,
-                                NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::WRITE);
+                CHARACTERISTIC_UUID_RX,
+                NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::WRITE);
 
             _raw_char = _service->createCharacteristic(
-                                CHARACTERISTIC_UUID_RAW,
-                                NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::WRITE);
+                CHARACTERISTIC_UUID_RAW,
+                NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::WRITE);
 
             if (_tx_char) {
                 _tx_char->setCallbacks(this);
@@ -79,7 +76,7 @@ public:
         advData.addServiceUUID(_service->getUUID());
         if (short_name) {
             const size_t len = strnlen(short_name, 16);
-            if (len >  0 && len <= 8) {
+            if (len > 0 && len <= 8) {
                 advData.setShortName(short_name);
             }
         }
@@ -130,7 +127,7 @@ public:
             return 0;
         }
 #if LOGGER_LOG_LEVEL >= LOGGER_LEVEL_DEBUG
-        char b[len+1];
+        char b[len + 1];
         memcpy(b, buf, len);
         b[len] = '\0';
         LOG_D("<< %s", b);
@@ -143,14 +140,14 @@ public:
     }
 
     String read() {
-      String result;
-      {
-        char* msg = _rx_queue.front();
-        _rx_queue.pop();
-        result = msg;
-        free(msg);
-      }
-      return result;
+        String result;
+        {
+            char* msg = _rx_queue.front();
+            _rx_queue.pop();
+            result = msg;
+            free(msg);
+        }
+        return result;
     }
 
     bool available() {
@@ -166,7 +163,6 @@ public:
     }
 
 private:
-
     void onConnect(NimBLEServer* server, NimBLEConnInfo& connInfo) override {
         LOG_I("BLE connected");
         _connected = true;
@@ -182,28 +178,28 @@ private:
     }
 
     void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& connInfo) override {
-      const uint8_t* data = pChar->getValue();
-      uint16_t len  = pChar->getLength();
+        const uint8_t* data = pChar->getValue();
+        uint16_t len = pChar->getLength();
 
-      if (!data || !len) {
-        return;
-      }
+        if (!data || !len) {
+            return;
+        }
 
-      if (pChar == _rx_char) {
-        char* msg = (char*)malloc(len+1);
-        if (!msg) {
-          LOG_E("Out of memory");
-          return;
+        if (pChar == _rx_char) {
+            char* msg = (char*)malloc(len + 1);
+            if (!msg) {
+                LOG_E("Out of memory");
+                return;
+            }
+            memcpy(msg, data, len);
+            msg[len] = '\0';   // Null-terminate string
+            LOG_D(">> %s", msg);
+            {
+                _rx_queue.push(msg);
+            }
+        } else if (pChar == _raw_char) {
+            if (onRawData) onRawData(data, len);
         }
-        memcpy(msg, data, len);
-        msg[len] = '\0';   // Null-terminate string
-        LOG_D(">> %s", msg);
-        {
-          _rx_queue.push(msg);
-        }
-      } else if (pChar == _raw_char) {
-        if (onRawData) onRawData(data, len);
-      }
     }
 
     void onStatus(NimBLECharacteristic* pCharacteristic, int code) override {
@@ -215,12 +211,12 @@ private:
     }
 
 private:
-    bool                    _connected;
-    std::queue<char*>       _rx_queue;
-    NimBLEServer            *_server;
-    NimBLEService           *_service;
-    NimBLECharacteristic    *_tx_char;
-    NimBLECharacteristic    *_rx_char;
-    NimBLECharacteristic    *_raw_char;
-    SemaphoreHandle_t       _sem_indicate = NULL;
+    bool _connected;
+    std::queue<char*> _rx_queue;
+    NimBLEServer* _server;
+    NimBLEService* _service;
+    NimBLECharacteristic* _tx_char;
+    NimBLECharacteristic* _rx_char;
+    NimBLECharacteristic* _raw_char;
+    SemaphoreHandle_t _sem_indicate = NULL;
 };
